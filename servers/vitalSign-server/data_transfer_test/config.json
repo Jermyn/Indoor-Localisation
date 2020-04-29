@@ -1,0 +1,42 @@
+{
+  "webServer": {
+    "ip":                     "137.132.165.139",
+    "port":                   80,
+    "restUrl":                "http://137.132.165.139/api",
+    "restUrlHTTPS":           "https://location.circuitmonk.com/api",
+    "graphqlUrl":             "http://137.132.165.139/graphql",
+    "graphqlUrlHTTPS":        "https://location.circuitmonk.com/graphql"
+  },
+  "pgServer": {
+    "user":                   "macpro",
+    "database":               "history",
+    "password":               "",
+    "host":                   "localhost",
+    "port":                   5432
+  },
+  "zmqSockets": {
+    "anchorData": {
+      "pushpull":             "tcp://137.132.165.161:5566"
+    },
+    "beaconData": {
+      "pushpull":             "tcp://137.132.165.139:5556"
+    },
+    "broker": {
+      "xpub":                 "tcp://137.132.165.139:5567",
+      "xsub":                 "tcp://137.132.165.139:5568"
+    },
+    "serverRequests": {
+      "reqrep":               "tcp://137.132.165.139:5569"
+    }
+  },
+  "notifications": {
+    "cacheUpdate":            "CACHE_UPDATE",
+    "cacheRequest":           "CACHE_REQUEST",
+    "serverHeartBeat":        "SERVER_HEARTBEAT",
+    "anchorStatus":           "ANCHOR_STATUS",
+    "anchorCommand":          "ANCHOR_COMMAND",
+    "connectGatt":            "CONNECT_GATT",
+    "disconnectGatt":         "DISCONNECT_GATT",
+    "positionUpdate":         "POSITION_UPDATE"
+  }
+}
