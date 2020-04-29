@@ -1,0 +1,16 @@
+[Unit]
+After=boot_up.service
+Requires=boot_up.service
+
+[Service]
+SyslogIdentifier=monitoring
+Type=simple
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+User=0
+Group=0
+ExecStart=/bin/bash /home/root/node_client/scripts/monitoring.sh
+
+[Install]
+WantedBy=multi-user.target
