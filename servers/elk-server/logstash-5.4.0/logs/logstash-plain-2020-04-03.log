@@ -1,0 +1,2 @@
+[2020-04-03T07:36:05,140][ERROR][logstash.inputs.zeromq   ] ZeroMQ error while in recv_strings {:error_code=>-1}
+[2020-04-03T15:45:00,866][ERROR][logstash.inputs.zeromq   ] ZeroMQ error while in recv_strings {:error_code=>-1}

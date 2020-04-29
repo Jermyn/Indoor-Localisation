@@ -1,0 +1,13 @@
+before_install: sudo apt-get install libzmq3-dev
+script: bundle exec rspec
+language: ruby
+rvm:
+  - 2.6.0
+  - ruby-head
+  - jruby-head
+  - rbx
+
+matrix:
+  allow_failures:
+    - rvm: ruby-head
+    - rvm: jruby-head

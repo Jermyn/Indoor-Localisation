@@ -1,0 +1,1 @@
+[2020-03-27T17:18:17,404][ERROR][logstash.inputs.zeromq   ] ZeroMQ error while in recv_strings {:error_code=>-1}
