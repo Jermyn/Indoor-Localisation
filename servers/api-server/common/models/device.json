@@ -1,0 +1,42 @@
+{
+  "name": "Device",
+  "base": "PersistedModel",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "id": true
+    },
+    "type": {
+      "type": "string",
+      "required": true,
+      "default": "mobile"
+    },
+    "location": {
+      "type": "object"
+    }
+  },
+  "validations": [],
+  "relations": {
+    "anchors": {
+      "type": "hasOne",
+      "model": "Anchor",
+      "foreignKey": ""
+    },
+    "beacons": {
+      "type": "hasOne",
+      "model": "Beacon",
+      "foreignKey": ""
+    },
+    "gatts": {
+      "type": "hasOne",
+      "model": "Gatt",
+      "foreignKey": ""
+    }
+  },
+  "acls": [],
+  "methods": {}
+}

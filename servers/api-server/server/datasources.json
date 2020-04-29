@@ -1,0 +1,15 @@
+{
+  "db": {
+    "name": "db",
+    "connector": "memory"
+  },
+  "postgresql": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "indoor-localization-2.0",
+    "password": "",
+    "name": "postgresql",
+    "connector": "postgresql",
+    "user": "macpro"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Map",
+  "base": "PersistedModel",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "id": true
+    },
+    "scale": {
+      "type": "number",
+      "required": true,
+      "default": 1,
+      "postgresql": {
+        "dataType": "decimal"
+      }
+    },
+    "image": {
+      "type": "buffer"
+    },
+    "imageURL": {
+      "type": "string"
+    },
+    "coordinates": {
+      "type": "Object"
+    },
+    "navMesh": {
+      "type": "object"
+    },
+    "pois": {
+      "type": "object"
+    },
+    "navPath": {
+      "type": "object"
+    }
+  },
+  "validations": [],
+  "relations": {
+    "images": {
+      "type": "hasOne",
+      "model": "Image",
+      "foreignKey": ""
+    }
+  },
+  "acls": [],
+  "methods": {}
+}

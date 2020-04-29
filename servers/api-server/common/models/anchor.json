@@ -1,0 +1,45 @@
+{
+  "name": "Anchor",
+  "base": "PersistedModel",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "id": true
+    },
+    "sensitivity": {
+      "type": "number",
+      "required": true,
+      "default": 0
+    },
+    "measuredPower": {
+      "type": "number",
+      "required": true,
+      "default": -60,
+      "postgresql": {
+        "dataType": "decimal"
+      }
+    },
+    "offset": {
+      "type": "number",
+      "required": true,
+      "default": 0,
+      "postgresql": {
+        "dataType": "decimal"
+      }
+    }
+  },
+  "validations": [],
+  "relations": {
+    "device": {
+      "type": "belongsTo",
+      "model": "Device",
+      "foreignKey": ""
+    }
+  },
+  "acls": [],
+  "methods": {}
+}

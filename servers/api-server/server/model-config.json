@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ],
+    "mixins": [
+      "loopback/common/mixins",
+      "loopback/server/mixins",
+      "../common/mixins",
+      "./mixins"
+    ]
+  },
+  "User": {
+    "dataSource": "postgresql"
+  },
+  "AccessToken": {
+    "dataSource": "postgresql",
+    "public": false
+  },
+  "ACL": {
+    "dataSource": "postgresql",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "postgresql",
+    "public": false,
+    "options": {
+      "strictObjectIDCoercion": true
+    }
+  },
+  "Role": {
+    "dataSource": "postgresql",
+    "public": false
+  },
+  "Map": {
+    "dataSource": "postgresql",
+    "public": true
+  },
+  "Beacon": {
+    "dataSource": "postgresql",
+    "public": true
+  },
+  "Anchor": {
+    "dataSource": "postgresql",
+    "public": true
+  },
+  "Device": {
+    "dataSource": "postgresql",
+    "public": true
+  },
+  "Gatt": {
+    "dataSource": "postgresql",
+    "public": true
+  }
+}

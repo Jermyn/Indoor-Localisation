@@ -1,0 +1,30 @@
+{
+  "name": "Gatt",
+  "base": "PersistedModel",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "id": true
+    },
+    "profile": {
+      "type": "object"
+    },
+    "connect": {
+      "type": "Boolean"
+    }
+  },
+  "validations": [],
+  "relations": {
+    "device": {
+      "type": "belongsTo",
+      "model": "Device",
+      "foreignKey": ""
+    }
+  },
+  "acls": [],
+  "methods": {}
+}
