@@ -1,0 +1,55 @@
+{
+  "name": "new-web-server",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@mapbox/mapbox-gl-draw": "^1.1.1",
+    "@material-ui/core": "^3.9.3",
+    "@material-ui/icons": "^3.0.2",
+    "@turf/helpers": "^6.1.4",
+    "@turf/length": "^6.0.2",
+    "@turf/turf": "^5.1.6",
+    "axios": "^0.18.0",
+    "keymirror": "^0.1.1",
+    "mapbox-gl": "^0.54.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-draggable": "^3.3.0",
+    "react-map-gl": "^4.1.2",
+    "react-mapbox-gl": "^4.3.0",
+    "react-redux": "^7.0.3",
+    "react-router-dom": "^5.0.0",
+    "react-scripts": "3.0.0",
+    "react-tween-state": "^0.1.5",
+    "redux": "^4.0.1",
+    "redux-thunk": "^2.3.0",
+    "rxjs-compat": "^6.5.2",
+    "turf-featurecollection": "^1.0.1",
+    "underscore": "^1.9.1",
+    "visibilityjs": "^2.0.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.4.4"
+  }
+}
