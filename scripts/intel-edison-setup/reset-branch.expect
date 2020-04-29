@@ -1,0 +1,33 @@
+#!/usr/local/bin/expect
+
+#########################################################################
+## Requires USB for serial port and git repo and ssh to be set
+#########################################################################
+
+set PORT    "/dev/[exec ls /dev | grep tty.usbserial]"
+set BAUD    115200
+set BRANCH  anchor
+
+# # get branch
+# puts "branch:"
+# gets stdin BRANCH
+
+# spawn screen
+spawn screen $PORT $BAUD
+
+# manual login
+puts "\nLog in Manually, type '+++' when done..."
+sleep 1
+interact +++ return
+
+# Hard Reset Firmware
+send "cd /home/root/node_client\r"
+expect ":"
+send "git fetch origin $BRANCH\r"
+expect ":"
+send "git reset --hard origin/$BRANCH\r"
+expect ":"
+send "bash /home/root/node_client/scripts/setup.sh\r"
+expect ":"
+send "shutdown -r now\r"
+expect ":"

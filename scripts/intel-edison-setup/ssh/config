@@ -1,0 +1,4 @@
+Host gitlab.com
+  HostName         gitlab.com
+  IdentityFile     /home/root/.ssh/indoor-localization-edison.key
+  User             git
