@@ -1,0 +1,62 @@
+{
+  "name": "medicalportal",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@mapbox/maki": "^6.0.0",
+    "@mapbox/mapbox-gl-draw": "^1.1.1",
+    "@material-ui/core": "^3.8.1",
+    "@material-ui/icons": "^3.0.1",
+    "@material-ui/lab": "^3.0.0-alpha.30",
+    "@turf/length": "^6.0.2",
+    "@turf/turf": "^5.1.6",
+    "@zxing/library": "^0.12.3",
+    "axios": "^0.18.1",
+    "chart.js": "^2.8.0",
+    "chartjs-plugin-streaming": "^1.8.0",
+    "chartjs-plugin-zoom": "^0.6.6",
+    "firebase": "^5.4.0",
+    "hammerjs": "^2.0.8",
+    "http-proxy-middleware": "^0.19.1",
+    "immutability-helper": "^3.0.0",
+    "keymirror": "^0.1.1",
+    "mapbox-gl": "^0.52.0",
+    "material-ui-dropzone": "^1.0.3",
+    "moment": "^2.24.0",
+    "npm": "^6.14.5",
+    "pondjs": "^0.8.10",
+    "quagga": "^0.12.1",
+    "react": "^16.7.0",
+    "react-chartjs-2": "^2.7.6",
+    "react-dom": "^16.4.2",
+    "react-draggable": "^4.3.1",
+    "react-map-gl": "^4.0.9",
+    "react-mapbox-gl": "^4.2.0",
+    "react-router-dom": "^4.3.1",
+    "react-scripts": "2.0.3",
+    "react-select": "^2.3.0",
+    "react-tap-event-plugin": "^3.0.3",
+    "react-timeseries-charts": "^0.15.5",
+    "redux": "^4.0.1",
+    "redux-thunk": "^2.3.0",
+    "rickshaw": "^1.6.6",
+    "socket.io": "^2.2.0",
+    "socket.io-client": "^2.2.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "react-redux": "^5.0.7"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

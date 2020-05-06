@@ -2,7 +2,7 @@ from elasticsearch import Elasticsearch
 import csv
 import sys
 
-HOST_URLS = ["http://127.0.0.1:9200"]
+HOST_URLS = ["http://137.132.165.1391:9200"]
 
 es_conn = Elasticsearch(HOST_URLS)
 
@@ -50,7 +50,7 @@ def writeToFile(fileName, result):
 ###first argument:start time, 2nd argument: end time, 3rd argument: query size, 4th argument: filename
 res = searchDoc(es_conn, sys.argv[1], sys.argv[2], sys.argv[3])
 print("%d documents found" % res['hits']['total'])
-writeToFile(sys.argv[4], res)
+# writeToFile(sys.argv[4], res)
 # for doc in res['hits']['hits']:
   # print (doc)
   # print("%s %s %s %s" % (doc['_source']['rssi'], doc['_source']['transmitterId'], doc['_source']['receiverId'], doc['_source']['time']))
