@@ -1,0 +1,15 @@
+[Unit]
+After=bluetooth.target
+Requires=bluetooth.target
+
+[Service]
+SyslogIdentifier=boot_up
+Type=oneshot
+StandardOutput=syslog
+StandardError=syslog
+User=0
+Group=0
+ExecStart=/bin/bash /home/pi/node_client/scripts/boot_up.sh
+
+[Install]
+WantedBy=multi-user.target

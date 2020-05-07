@@ -1,0 +1,5 @@
+auto wlan0
+iface wlan0 inet manual
+  pre-up killall -q wpa_supplicant udhcpc ; wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
+  post-up udhcpc -i wlan0 -t 8 --now
+  post-down killall -q wpa_supplicant udhcpc
