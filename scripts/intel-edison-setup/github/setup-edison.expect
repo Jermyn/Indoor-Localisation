@@ -1,0 +1,69 @@
+#!/usr/local/bin/expect
+
+#########################################################################
+## Requires USB for ethernet
+## clear .ssh/known_hosts first
+#########################################################################
+
+set USR     root
+set PASSWD  lightbulb
+set RNDIS   192.168.1.12
+set BRANCH  master
+
+puts "Anchor:"
+gets stdin ANCHOR
+puts "Branch:"
+#gets stdin BRANCH
+
+#########################################################################
+## setup git and ssh
+#########################################################################
+
+# exec ./setup-git-ssh.expect
+
+#########################################################################
+## setup git and ssh
+#########################################################################
+set timeout 60
+
+puts "ssh in to ${USR}@${RNDIS} ..."
+
+spawn ssh ${USR}@${RNDIS}
+expect {
+  "password:" {
+    send "$PASSWD\r"
+    expect ":"
+  }
+  "(yes/no)?" {
+    send "yes\r"
+    expect "password:" {
+      send "$PASSWD\r"
+      expect ":"
+    }
+  }
+}
+send "cd /home/root/node_client\r"
+expect ":"
+puts "fetching $BRANCH"
+send "git fetch origin $BRANCH\r"
+expect {
+   "(yes/no)?" {
+     send "yes\r"
+   }
+ }
+expect "origin/$BRANCH"
+send "git reset --hard origin/$BRANCH\r"
+expect "HEAD"
+puts "running setup"
+send "rm -rf /etc/systemd/system/localize.service.d\r"
+expect ":"
+send "bash /home/root/node_client/scripts/setup_env.sh $ANCHOR -59\r"
+expect ":"
+send "bash /home/root/node_client/scripts/setup.sh\r"
+expect ":"
+# puts "restarting"
+# send "shutdown -r now\r"
+# expect ":"
+puts "leaving edison..."
+send "exit\r"
+expect ">"

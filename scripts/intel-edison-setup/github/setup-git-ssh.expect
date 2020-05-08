@@ -1,0 +1,79 @@
+#!/usr/local/bin/expect
+
+#########################################################################
+## Requires USB ethernet
+#########################################################################
+
+# enable logging
+log_user 1 
+
+set USR     root
+set PASSWD  lightbulb
+set RNDIS   192.168.1.12
+set REPO    "git@github.com:Jermyn/indoor-localisation-rpi.git"
+set BRANCH  "master"
+
+#########################################################################
+## initialize node_client and .ssh directories
+## set up git repository
+#########################################################################
+set timeout 60
+
+puts "ssh in to ${USR}@${RNDIS} ..."
+
+spawn ssh ${USR}@${RNDIS}
+expect {
+  "password:" {
+    send "$PASSWD\r"
+    expect ":"
+  }
+  "(yes/no)?" {
+    send "yes\r"
+    expect "password:" {
+      send "$PASSWD\r"
+      expect ":"
+    }
+  }
+}
+puts "creating /home/root/node_client"
+send "rm -rf /home/root/node_client ; mkdir /home/root/node_client\r"
+expect ":"
+puts "creating /home/root/.ssh"
+send "rm -rf /home/root/.ssh ; mkdir /home/root/.ssh\r"
+expect ":"
+puts "initializing git repository"
+send "cd /home/root/node_client ; git init ; git remote add origin ${REPO}\r"
+expect ":"
+send "exit\r"
+expect ">"
+
+#########################################################################
+## transfer files and setup configs
+#########################################################################
+set timeout 60
+
+puts "sftp in to ${USR}@${RNDIS} ..."
+
+spawn sftp ${USR}@${RNDIS}
+expect {
+  "(yes/no)?" {
+    send "yes\r"
+    expect "password:" {
+      send "$PASSWD\r"
+      expect ">"
+    }
+  }
+  "password:" {
+    send "$PASSWD\r"
+    expect ">"
+  }
+}
+puts "setting up ssh config"
+send "put -r ssh/* /home/root/.ssh\r"
+expect ">"
+puts "chmod key"
+send "chmod 400 /home/root/.ssh/indoor-localisation-edison.key\r"
+expect ">"
+send "exit\r"
+expect ">"
+
