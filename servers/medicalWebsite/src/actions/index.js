@@ -45,7 +45,8 @@ import {
     UPDATE_STAFF,
     FETCH_ROOMS,
 
-    FETCH_DASHBOARD_PATIENTS
+    FETCH_DASHBOARD_PATIENTS,
+    FETCH_DASHBOARD_PATIENTS_2
 
 } from "../constants/action-types";
 
@@ -734,18 +735,80 @@ export const removeListenerSpecificHeartrateVitals = (uuid) => async dispatch =>
     heartrateRef.child(uuid).off()
 }
 
-export const fetchDashboardPatients = () => dispatch => {
+export const fetchDashboardPatients = () => async dispatch => {
+    const query = {
+        "size": 0,
+        "aggs": {
+            "filter_1": {
+                "terms": {
+                    "field": "gattid.keyword",
+                    "size": 500,
+                    "order": {
+                        "_term": "asc"
+                    }
+                },
+                "aggs": {
+                    "filter_2": {
+                        "top_hits": {
+                            "_source": [
+                                "gattid",
+                                "heart_rate",
+                                "spo2",
+                                "@timestamp"
+                            ],
+                            "size": 1,
+                            "sort": [
+                                {
+                                    "@timestamp": {
+                                        "order": "desc"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    axios.get(`http://137.132.165.139:9200/zmq/vitals/_search?scroll=1m`, {
+        params: {
+            source: JSON.stringify(query),
+            source_content_type: 'application/json'
+        }
+    })
+        .then((res) => {
+            const buckets = res.data.aggregations.filter_1.buckets.map(bucket => (
+                {
+                    id: bucket.filter_2.hits.hits[0]._source.gattid,
+                    timestamp : bucket.filter_2.hits.hits[0]._source["@timestamp"],
+                    heart_rate: bucket.filter_2.hits.hits[0]._source.heart_rate,
+                    spo2: bucket.filter_2.hits.hits[0]._source.spo2
+                }
+            ))
+
+            if (buckets.length > 0) {
+                dispatch({
+                    type: FETCH_DASHBOARD_PATIENTS,
+                    payload: buckets
+                });
+            }
+        })
+
+}
+
+export const fetchDashboardPatients2 = () => async dispatch => {
     const data = template["hits"]["hits"]
 
     const data2 = data.map(patient => ({
-            id : patient.id,
-            heart_rate : Math.floor(Math.random() * 200),
-            spo2 : patient.spo2
+            id: patient.id,
+            heart_rate: 20 + Math.floor(Math.random() * 140),
+            spo2: patient.spo2
         }
     ))
 
     dispatch({
-        type: FETCH_DASHBOARD_PATIENTS,
+        type: FETCH_DASHBOARD_PATIENTS_2,
         payload: data2
     })
 

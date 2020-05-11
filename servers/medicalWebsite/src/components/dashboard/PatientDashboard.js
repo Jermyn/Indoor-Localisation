@@ -13,7 +13,7 @@ import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 
 import TemporaryDrawer from '../../TemporaryDrawer.js';
 
-import {signOutUser, verifyAuth, fetchDashboardPatients} from "../../actions";
+import {signOutUser, verifyAuth, fetchDashboardPatients, fetchDashboardPatients2} from "../../actions";
 import {connect} from "react-redux";
 import PatientReading from "./PatientReading";
 
@@ -57,7 +57,8 @@ const mapDispatchToProps = dispatch => {
     return {
         signOutUser: username => dispatch(signOutUser(username)),
         verifyAuth: credentials => dispatch(verifyAuth(credentials)),
-        fetchDashboardPatients: patients => dispatch(fetchDashboardPatients())
+        fetchDashboardPatients: () => dispatch(fetchDashboardPatients()),
+        fetchDashboardPatients2: () => dispatch(fetchDashboardPatients2())
     };
 };
 
@@ -73,14 +74,11 @@ class PatientDashboard extends Component {
         };
     }
 
-    updatePatients() {
-        this.props.fetchDashboardPatients();
-    }
-
     componentDidMount() {
         console.log("PatientDashboard mount")
-        this.props.fetchDashboardPatients();
-        this.timer = setInterval(() => this.updatePatients(), 1000);
+
+        this.updatePatients()
+        this.timer = setInterval(() => this.updatePatients(), 5000);
     }
 
     componentWillUnmount() {
@@ -95,6 +93,11 @@ class PatientDashboard extends Component {
         if (this.props.isAuthenticating == false && this.props.authenticated == false) {
             this.props.history.push('/');
         }
+    }
+
+    updatePatients() {
+        this.props.fetchDashboardPatients();
+        // this.props.fetchDashboardPatients2();
     }
 
     toggleDrawer = () => {
@@ -127,8 +130,6 @@ class PatientDashboard extends Component {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
-
-        console.log(this.state.drawer)
 
         return (
             <div className={classes.root}>
@@ -178,8 +179,8 @@ class PatientDashboard extends Component {
                 <Grid container className={classes.container} justify="flex-start" alignItems='center' spacing={16}>
                     {
                         this.props.patients && this.props.patients.map((patient) => (
-                                <Grid item xs={4} sm={3} md={2} lg={1} xl={1} key={patient["id"]}>
-                                    <PatientReading patients={patient}/>
+                                <Grid item xs={4} sm={4} md={3} lg={2} xl={1} key={patient["id"]}>
+                                    <PatientReading patient={patient}/>
                                 </Grid>
                             )
                         )

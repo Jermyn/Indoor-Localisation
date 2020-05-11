@@ -44,7 +44,8 @@ import {
     READ_STAFF,
     FETCH_ROOMS,
 
-    FETCH_DASHBOARD_PATIENTS
+    FETCH_DASHBOARD_PATIENTS,
+    FETCH_DASHBOARD_PATIENTS_2,
 
 } from "../constants/action-types";
 import update from 'immutability-helper';
@@ -261,6 +262,8 @@ const rootReducer = (state = initialState, action) => {
             })
 
         case FETCH_DASHBOARD_PATIENTS:
+            return {...state, patients_d: action.payload};
+        case FETCH_DASHBOARD_PATIENTS_2:
             return {...state, patients_d: action.payload};
         default:
             return state;
