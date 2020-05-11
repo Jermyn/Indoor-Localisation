@@ -78,7 +78,7 @@ class PatientDashboard extends Component {
         console.log("PatientDashboard mount")
 
         this.updatePatients()
-        this.timer = setInterval(() => this.updatePatients(), 5000);
+        this.timer = setInterval(() => this.updatePatients(), 1000);
     }
 
     componentWillUnmount() {
