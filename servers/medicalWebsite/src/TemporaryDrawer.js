@@ -13,6 +13,7 @@ import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import AddIcon from '@material-ui/icons/Add';
 import PeopleIcon from '@material-ui/icons/People';
+import DashboardIcon from '@material-ui/icons/Dashboard';
 import { Link } from 'react-router-dom';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 
@@ -74,7 +75,9 @@ class TemporaryDrawer extends React.Component {
         <List>
           {['Home', 'Add Patient', 'Add Asset'].map((text, index) => (
             <ListItem button component={Link} to={links[index]} key={text}>
-              <ListItemIcon>{index === 0 ? <HomeIcon /> : index % 2 === 0 ?  <div className={classes.briefcaseIcon}><i className="fas fa-briefcase-medical" /></div> : <PersonAddIcon />}</ListItemIcon>
+              <ListItemIcon>{index === 0 ? <HomeIcon /> : index % 2 === 0 ?
+                  <div className={classes.briefcaseIcon}><i className="fas fa-briefcase-medical" /></div> : <PersonAddIcon />}
+              </ListItemIcon>
               <ListItemText primary={text} />
             </ListItem>
           ))}
@@ -87,7 +90,9 @@ class TemporaryDrawer extends React.Component {
         <List>
           {['Location Tracking', 'Contact Tracing', 'Dashboard'].map((text, index) => (
             <ListItem button component={Link} to={links2[index]} key={text}>
-              <ListItemIcon>{index % 2 === 0 ? <LocationOnIcon /> : <PeopleIcon />}</ListItemIcon>
+              <ListItemIcon>
+                {index % 3 === 0 ? <LocationOnIcon /> : index % 3 === 1 ? <PeopleIcon /> : <DashboardIcon/>}
+              </ListItemIcon>
               <ListItemText primary={text} />
             </ListItem>
           ))}
@@ -109,7 +114,11 @@ class TemporaryDrawer extends React.Component {
         <List>
           {['Location Tracking', 'Contact Tracing', 'Dashboard'].map((text, index) => (
             <ListItem button key={text}>
-              <ListItemIcon>{index % 2 === 0 ? <LocationOnIcon /> : <div><AddIcon /><i className="fas fa-user-md fa-sm" /></div>}</ListItemIcon>
+              <ListItemIcon>
+                {index % 3 === 0 ? <LocationOnIcon /> :
+                    index % 3 === 1 ? <div><AddIcon /><i className="fas fa-user-md fa-sm" /> </div> :
+                        <DashboardIcon/>}
+              </ListItemIcon>
               <ListItemText primary={text} />
             </ListItem>
           ))}

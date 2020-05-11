@@ -294,7 +294,7 @@ render() {
                         alt="Contemplative Reptile"
                         className={classes.media}
                         height="180"
-                        image="img/NUH.jpg"
+                        image="img/Dashboard.jpg"
                         title="dashboard"
                     />
                     <CardContent>
@@ -302,7 +302,7 @@ render() {
                         Dashboard
                       </Typography>
                       <Typography component="p">
-                        Monitor all patients' Heart Rate and SPO2 readings
+                        Monitor patients' heart rate and SpO2 readings
                       </Typography>
                     </CardContent>
                   </CardActionArea>
