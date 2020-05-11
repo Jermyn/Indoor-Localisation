@@ -12,6 +12,7 @@ import PatientInfo from "./PatientInfo";
 import AssetStaffInfo from "./AssetStaffInfo"
 import AddConfirmation from "./AddConfirmation"
 import AddDevice from "./AddDevice"
+import PatientDashboard from "./components/dashboard/PatientDashboard";
 
 export default () =>
   <Switch>
@@ -28,4 +29,5 @@ export default () =>
     <Route path="/staffInfo" exact component={AssetStaffInfo} />
     <Route path="/assetInfo" exact component={AssetStaffInfo} />
     <Route path="/addConfirmation" exact component={AddConfirmation} />
+    <Route path="/dashboard" exact component={PatientDashboard} />
   </Switch>;

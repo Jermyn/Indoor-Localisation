@@ -43,3 +43,5 @@ export const READ_STAFF = "READ_STAFF"
 export const FETCH_ROOMS = "FETCH_ROOMS"
 export const ASSIGN_ROOM = "ASSIGN_ROOM"
 export const EDIT_ROOM = "EDIT_ROOM"
+
+export const FETCH_DASHBOARD_PATIENTS = "FETCH_DASHBOARD_PATIENTS"

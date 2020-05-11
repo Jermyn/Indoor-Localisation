@@ -68,7 +68,7 @@ class TemporaryDrawer extends React.Component {
   render() {
     const { classes, toggle } = this.props;
     const links = ['/home', '/addPatient', '/addAsset']
-    const links2 = ['/locationTracking', '/contactTracing']
+    const links2 = ['/locationTracking', '/contactTracing', '/dashboard']
     const sideList = (
       <div className={classes.list}>
         <List>
@@ -85,7 +85,7 @@ class TemporaryDrawer extends React.Component {
         </List>
         <Divider />
         <List>
-          {['Location Tracking', 'Contact Tracing'].map((text, index) => (
+          {['Location Tracking', 'Contact Tracing', 'Dashboard'].map((text, index) => (
             <ListItem button component={Link} to={links2[index]} key={text}>
               <ListItemIcon>{index % 2 === 0 ? <LocationOnIcon /> : <PeopleIcon />}</ListItemIcon>
               <ListItemText primary={text} />
@@ -107,7 +107,7 @@ class TemporaryDrawer extends React.Component {
         </List>
         <Divider />
         <List>
-          {['Location Tracking', 'Contact Tracing'].map((text, index) => (
+          {['Location Tracking', 'Contact Tracing', 'Dashboard'].map((text, index) => (
             <ListItem button key={text}>
               <ListItemIcon>{index % 2 === 0 ? <LocationOnIcon /> : <div><AddIcon /><i className="fas fa-user-md fa-sm" /></div>}</ListItemIcon>
               <ListItemText primary={text} />

@@ -106,9 +106,11 @@ class Home extends Component {
       this.props.history.push('/');
     }
   }
+
   toggleDrawer = () => {
     this.setState({ drawer: true});
   }
+
   handleChange = event => {
     this.setState({ auth: event.target.checked });
   };
@@ -277,6 +279,30 @@ render() {
                       </Typography>
                       <Typography component="p">
                         Identify contact between the infected and other patients
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              </Grid>
+              <Grid item>
+                <Card className={classes.card}>
+                  <CardActionArea
+                      component={Link}
+                      to="/dashboard">
+                    <CardMedia
+                        component="img"
+                        alt="Contemplative Reptile"
+                        className={classes.media}
+                        height="180"
+                        image="img/NUH.jpg"
+                        title="dashboard"
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h6" component="h2">
+                        Dashboard
+                      </Typography>
+                      <Typography component="p">
+                        Monitor all patients' Heart Rate and SPO2 readings
                       </Typography>
                     </CardContent>
                   </CardActionArea>
