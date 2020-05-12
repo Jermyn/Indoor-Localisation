@@ -752,9 +752,10 @@ export const fetchDashboardPatients = () => async dispatch => {
                         "top_hits": {
                             "_source": [
                                 "gattid",
+                                "@timestamp",
+                                "anchorId",
                                 "heart_rate",
-                                "spo2",
-                                "@timestamp"
+                                "spo2"
                             ],
                             "size": 1,
                             "sort": [
@@ -782,6 +783,7 @@ export const fetchDashboardPatients = () => async dispatch => {
                 {
                     id: bucket.filter_2.hits.hits[0]._source.gattid,
                     timestamp : bucket.filter_2.hits.hits[0]._source["@timestamp"],
+                    achorId: bucket.filter_2.hits.hits[0]._source.anchorId ? bucket.filter_2.hits.hits[0]._source.anchorId : "",
                     heart_rate: bucket.filter_2.hits.hits[0]._source.heart_rate,
                     spo2: bucket.filter_2.hits.hits[0]._source.spo2
                 }

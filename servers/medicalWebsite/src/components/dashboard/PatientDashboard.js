@@ -31,17 +31,24 @@ const styles = {
         opacity: 0.4,
         color: 'black',
     },
-    container: {
-        padding: 100,
-
-    },
     title: {
         paddingBottom: '.3em',
         paddingTop: '1em',
     },
     AppBar: {
         borderBottom: '1px solid #f2f3f3',
+    },
+    gridContainerMain: {
+        padding: 100,
+    },
+    gridContainerRoom: {
+        padding: 20,
+        border: '2px solid #000000',
+    },
+    gridCard: {
+        padding: 5
     }
+
 };
 
 const mapStateToProps = state => {
@@ -105,7 +112,7 @@ class PatientDashboard extends Component {
     }
 
     toggleCloseDrawer = () => {
-        this.setState({ drawer: false });
+        this.setState({drawer: false});
     }
 
     handleChange = event => {
@@ -130,6 +137,13 @@ class PatientDashboard extends Component {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
+
+        let rooms = []
+        if (this.props.patients) {
+            this.props.patients.sort((a, b) => (a.achorId > b.achorId) ? 1 : -1)
+            rooms = [...new Set(this.props.patients.map(x => x.achorId))]
+        }
+
 
         return (
             <div className={classes.root}>
@@ -174,18 +188,27 @@ class PatientDashboard extends Component {
                     </Toolbar>
                 </AppBar>
                 <ClickAwayListener onClickAway={this.toggleCloseDrawer}>
-                    <TemporaryDrawer toggle={this.state.drawer} />
+                    <TemporaryDrawer toggle={this.state.drawer}/>
                 </ClickAwayListener>
-                <Grid container className={classes.container} justify="flex-start" alignItems='center' spacing={16}>
-                    {
-                        this.props.patients && this.props.patients.map((patient) => (
-                                <Grid item xs={4} sm={4} md={3} lg={2} xl={1} key={patient["id"]}>
+                <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='center'>
+                    {rooms && rooms.map((room) => (
+                        <Grid container className={classes.gridContainerRoom} key={room}>
+                            <Grid item xs={12}>
+                                <Typography gutterBottom variant="h5">
+                                    <strong>{room}</strong>
+                                </Typography>
+                            </Grid>
+                            {this.props.patients &&
+                            this.props.patients.filter(patient => patient.achorId === room).map((patient) => (
+                                <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
+                                      key={patient["id"]}>
                                     <PatientReading patient={patient}/>
                                 </Grid>
-                            )
-                        )
-                    }
+                            ))}
+                        </Grid>
+                    ))}
                 </Grid>
+
             </div>
         );
     };
