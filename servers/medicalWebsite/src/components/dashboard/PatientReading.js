@@ -42,7 +42,8 @@ class PatientReading extends React.Component {
         const tCur = Date.now()
 
         let status
-        if (tCur - tLatest > 10000) {
+        // 3hrs = 10800000
+        if (tCur - tLatest > 10800000) {
             status = classes.inactive
         } else if (this.props.patient["heart_rate"] < 140 && this.props.patient["heart_rate"] > 30){
             status = classes.normal
