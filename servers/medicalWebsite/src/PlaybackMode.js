@@ -312,7 +312,7 @@ class PlaybackMode extends Component {
     timeStart = timeStart + ':00'
     timeEnd = timeEnd + ':00'
     const query = {
-      "size": 500000, 
+      "size": 10000,
       "sort": [{"@timestamp": {"order": "asc"}}], 
       "query": {
         "bool": {

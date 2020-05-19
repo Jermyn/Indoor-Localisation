@@ -13,7 +13,7 @@ import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 
 import TemporaryDrawer from '../../TemporaryDrawer.js';
 
-import {signOutUser, verifyAuth, fetchDashboardPatients, fetchDashboardPatients2} from "../../actions";
+import {signOutUser, verifyAuth, fetchRooms, fetchDashboardPatients, fetchDashboardPatients2} from "../../actions";
 import {connect} from "react-redux";
 import PatientReading from "./PatientReading";
 
@@ -56,6 +56,7 @@ const mapStateToProps = state => {
         username: state.username,
         authenticated: state.authenticated,
         isAuthenticating: state.isAuthenticating,
+        rooms: state.rooms,
         patients: state.patients_d
     };
 };
@@ -64,6 +65,7 @@ const mapDispatchToProps = dispatch => {
     return {
         signOutUser: username => dispatch(signOutUser(username)),
         verifyAuth: credentials => dispatch(verifyAuth(credentials)),
+        fetchRooms: () => dispatch(fetchRooms()),
         fetchDashboardPatients: () => dispatch(fetchDashboardPatients()),
         fetchDashboardPatients2: () => dispatch(fetchDashboardPatients2())
     };
@@ -84,8 +86,9 @@ class PatientDashboard extends Component {
     componentDidMount() {
         console.log("PatientDashboard mount")
 
+        this.props.fetchRooms()
         this.updatePatients()
-        this.timer = setInterval(() => this.updatePatients(), 1000);
+        this.timer = setInterval(() => this.updatePatients(), 30000);
     }
 
     componentWillUnmount() {
@@ -138,12 +141,11 @@ class PatientDashboard extends Component {
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
 
-        let rooms = []
-        if (this.props.patients) {
-            this.props.patients.sort((a, b) => (a.achorId > b.achorId) ? 1 : -1)
-            rooms = [...new Set(this.props.patients.map(x => x.achorId))]
+        if (!this.props.rooms || !this.props.patients) {
+            return <div></div>
         }
 
+        this.props.patients.map(patient => patient.inRoom = false)
 
         return (
             <div className={classes.root}>
@@ -191,22 +193,42 @@ class PatientDashboard extends Component {
                     <TemporaryDrawer toggle={this.state.drawer}/>
                 </ClickAwayListener>
                 <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='center'>
-                    {rooms && rooms.map((room) => (
-                        <Grid container className={classes.gridContainerRoom} key={room}>
+                    {this.props.rooms && this.props.rooms.map((room) => (
+                        <Grid container className={classes.gridContainerRoom} key={room.id}>
                             <Grid item xs={12}>
-                                <Typography gutterBottom variant="h5">
-                                    <strong>{room}</strong>
+                                <Typography gutterBottom variant="h5" onClick={() => { console.log('click')}}>
+                                    <strong>{room.id}</strong>
                                 </Typography>
                             </Grid>
-                            {this.props.patients &&
-                            this.props.patients.filter(patient => patient.achorId === room).map((patient) => (
-                                <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
-                                      key={patient["id"]}>
-                                    <PatientReading patient={patient}/>
-                                </Grid>
-                            ))}
+                            {room.devices && this.props.patients.filter(p => room.devices.some(d => d.id === p.id)).map((patient) => {
+                                    patient.inRoom = true
+                                    return (
+                                        <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
+                                              key={patient["id"]}>
+                                            <PatientReading patient={patient}/>
+                                        </Grid>
+                                    )
+                                }
+                            )}
                         </Grid>
                     ))}
+                    <Grid container className={classes.gridContainerRoom}>
+                        <Grid item xs={12}>
+                            <Typography gutterBottom variant="h5" onClick={() => { console.log('click')}}>
+                                <strong>Unallocated</strong>
+                            </Typography>
+                        </Grid>
+                        {this.props.patients.filter(p => p.inRoom === false).map((patient) => {
+                                patient.inRoom = true
+                                return (
+                                    <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
+                                          key={patient["id"]}>
+                                        <PatientReading patient={patient}/>
+                                    </Grid>
+                                )
+                            }
+                        )}
+                    </Grid>
                 </Grid>
 
             </div>
