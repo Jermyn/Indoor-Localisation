@@ -262,9 +262,9 @@ const rootReducer = (state = initialState, action) => {
             })
 
         case FETCH_DASHBOARD_PATIENTS:
-            return {...state, patients_d: action.payload};
+            return {...state, patients_es: action.payload};
         case FETCH_DASHBOARD_PATIENTS_2:
-            return {...state, patients_d: action.payload};
+            return {...state, patients_es: action.payload};
         default:
             return state;
     }
