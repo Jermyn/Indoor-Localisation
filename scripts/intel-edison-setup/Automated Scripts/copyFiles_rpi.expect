@@ -1,0 +1,104 @@
+#!/usr/local/bin/expect
+log_user 1 
+set USR     pi
+set PASSWD  snickers
+set f [open "pssh_hosts.txt"]
+set hosts [split [read $f] "\n"]
+close $f
+
+##Copy files
+foreach host $hosts {
+	spawn sftp ${USR}@$host
+	expect {
+	  "password:" {
+	    send "$PASSWD\r"
+	    expect ":"
+  	}
+  	"(yes/no)?" {
+	    send "yes\r"
+	    expect "password:" {
+	      send "$PASSWD\r"
+	      expect ":"
+    	}
+  	}
+	}
+	expect "sftp> "
+	send "cd node_client/services \r" 
+	expect "sftp> "
+	send "put localize.service \r"
+	# expect "sftp> "
+	# send "put package.json \r" 
+	expect "sftp> "
+	send "bye \r"
+	expect eof
+	
+	spawn ssh ${USR}@$host
+	expect {
+	  "password:" {
+	    send "$PASSWD\r"
+	    expect ":"
+  		}
+  		"(yes/no)?" {
+		    send "yes\r"
+		    expect "password:" {
+		      send "$PASSWD\r"
+		      expect ":"
+	    	}
+  		}
+	}
+	send "cd node_client\r"
+	send "sudo cp services/localize.service    /etc/systemd/system\r"
+	send "sudo systemctl daemon-reload\r"
+	send "sudo systemctl restart localize\r"
+	expect ":"
+	puts "leaving rpi..."
+	send "exit\r"
+	expect ">"
+}
+
+##Send wpa_supplicant file
+# foreach host $hosts {
+# 	spawn sftp ${USR}@$host
+# 	expect {
+# 	  "password:" {
+# 	    send "$PASSWD\r"
+# 	    expect ":"
+#   	}
+#   		"(yes/no)?" {
+# 		    send "yes\r"
+# 		    expect "password:" {
+# 		      send "$PASSWD\r"
+# 		      expect ":"
+#     		}
+#   		}
+# 	}
+# 	expect "sftp>"
+# 	send "cd /etc/wpa_supplicant/ \r" 
+# 	expect "sftp> "
+# 	send "put ./wpa_supplicant.conf \r" 
+# 	expect "sftp> "
+# 	send "bye \r"
+# 	expect eof
+# }
+
+##mass shutdown
+# foreach host $hosts {
+# 	spawn ssh ${USR}@$host
+# 	expect {
+# 	  "password:" {
+# 	    send "$PASSWD\r"
+# 	    expect ":"
+#   	}
+#   	"(yes/no)?" {
+# 	    send "yes\r"
+# 	    expect "password:" {
+# 	      send "$PASSWD\r"
+# 	      expect ":"
+#     	}
+#   	}
+# 	}
+# 	send "sudo shutdown -h now\r"
+# 	puts "leaving edison..."
+# 	send "exit\r"
+# 	expect ">"
+# }
