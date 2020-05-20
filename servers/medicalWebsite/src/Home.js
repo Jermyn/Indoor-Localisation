@@ -106,9 +106,11 @@ class Home extends Component {
       this.props.history.push('/');
     }
   }
+
   toggleDrawer = () => {
     this.setState({ drawer: true});
   }
+
   handleChange = event => {
     this.setState({ auth: event.target.checked });
   };
@@ -213,16 +215,16 @@ render() {
                   <AddIcon /> Patient
                 </Button>
               </Grid>
-              <Grid item>
+              {/* <Grid item>
                 <Button component={Link} to="/addAsset" variant="outlined" color="primary" className={classes.addButton}>
                   <AddIcon /> Asset
                 </Button>
-              </Grid>
-              <Grid item>
+              </Grid> */}
+              {/* <Grid item>
                 <Button component={Link} to="/addStaff" variant="outlined" color="primary" className={classes.addButton} >
                   <AddIcon /> Staff
                 </Button>
-              </Grid>
+              </Grid> */}
             </Grid>
           </Grid>
           <Grid item xs={12}>
@@ -258,7 +260,7 @@ render() {
                   </CardActionArea>
                 </Card>
               </Grid>
-              <Grid item>
+              {/* <Grid item>
                 <Card className={classes.card}>
                   <CardActionArea
                     component={Link}
@@ -277,6 +279,30 @@ render() {
                       </Typography>
                       <Typography component="p">
                         Identify contact between the infected and other patients
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              </Grid> */}
+              <Grid item>
+                <Card className={classes.card}>
+                  <CardActionArea
+                      component={Link}
+                      to="/dashboard">
+                    <CardMedia
+                        component="img"
+                        alt="Contemplative Reptile"
+                        className={classes.media}
+                        height="180"
+                        image="img/Dashboard.jpg"
+                        title="dashboard"
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h6" component="h2">
+                        Dashboard
+                      </Typography>
+                      <Typography component="p">
+                        Monitor patients' heart rate and SpO2 readings
                       </Typography>
                     </CardContent>
                   </CardActionArea>
