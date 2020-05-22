@@ -82,7 +82,7 @@ class PlaybackChart extends React.Component {
       let newDataSet = {...dataset}
       const newBtcDataSet = { ...oldBtcDataSet };
       vitals.map((vital) => {
-        let value = vital._source.data
+        let value = vital._source.heart_rate
         let epoch = new Date(vital._source["@timestamp"]).toLocaleString('en-GB');
         let vitalSign = value
         let time = new Date(vital._source["@timestamp"])
