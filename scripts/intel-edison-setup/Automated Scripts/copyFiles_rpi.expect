@@ -1,7 +1,7 @@
 #!/usr/local/bin/expect
 log_user 1 
 set USR     pi
-set PASSWD  snickers
+set PASSWD  raspberry
 set f [open "pssh_hosts.txt"]
 set hosts [split [read $f] "\n"]
 close $f
@@ -23,37 +23,38 @@ foreach host $hosts {
   	}
 	}
 	expect "sftp> "
-	send "cd node_client/services \r" 
+	send "cd node_client/scripts \r" 
 	expect "sftp> "
-	send "put localize.service \r"
+	send "put reboot_hci.sh \r"
 	# expect "sftp> "
-	# send "put package.json \r" 
+	# send "put log.js \r" 
+	# send "put uninstall.sh \r" 
 	expect "sftp> "
 	send "bye \r"
 	expect eof
 	
-	spawn ssh ${USR}@$host
-	expect {
-	  "password:" {
-	    send "$PASSWD\r"
-	    expect ":"
-  		}
-  		"(yes/no)?" {
-		    send "yes\r"
-		    expect "password:" {
-		      send "$PASSWD\r"
-		      expect ":"
-	    	}
-  		}
-	}
-	send "cd node_client\r"
-	send "sudo cp services/localize.service    /etc/systemd/system\r"
-	send "sudo systemctl daemon-reload\r"
-	send "sudo systemctl restart localize\r"
-	expect ":"
-	puts "leaving rpi..."
-	send "exit\r"
-	expect ">"
+	# spawn ssh ${USR}@$host
+	# expect {
+	#   "password:" {
+	#     send "$PASSWD\r"
+	#     expect ":"
+ #  		}
+ #  		"(yes/no)?" {
+	# 	    send "yes\r"
+	# 	    expect "password:" {
+	# 	      send "$PASSWD\r"
+	# 	      expect ":"
+	#     	}
+ #  		}
+	# }
+	# send "cd node_client\r"
+	# send "sudo cp services/localize.service    /etc/systemd/system\r"
+	# send "sudo systemctl daemon-reload\r"
+	# send "sudo systemctl restart localize\r"
+	# expect ":"
+	# puts "leaving rpi..."
+	# send "exit\r"
+	# expect ">"
 }
 
 ##Send wpa_supplicant file
