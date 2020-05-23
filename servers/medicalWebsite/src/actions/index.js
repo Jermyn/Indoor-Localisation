@@ -776,7 +776,7 @@ export const fetchDashboardPatients = () => async dispatch => {
         }
     }
 
-    axios.get(`http://137.132.165.139:9200/zmq/vitals/_search?scroll=1m`, {
+    axios.get(`/zmq/vitals/_search?scroll=1m`, {
         params: {
             source: JSON.stringify(query),
             source_content_type: 'application/json'
