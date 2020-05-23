@@ -308,7 +308,6 @@ class PatientInfo2 extends Component {
                             <CardContent>
                                 <Grid item xs={12}>
                                     <Typography variant="h6" gutterBottom>Name: {this.props.info.name}</Typography>
-                                    <Typography variant="h6" gutterBottom>Device: {this.props.info.devices? this.props.info.devices[0].id : ''}</Typography>
                                 </Grid>
                                 <Grid item xs={12}> <ConnectedPlaybackMode/> </Grid>
                             </CardContent>

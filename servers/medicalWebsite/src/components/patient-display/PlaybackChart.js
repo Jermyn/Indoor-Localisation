@@ -2,7 +2,17 @@ import React from 'react';
 import moment from "moment";
 import {withStyles} from "@material-ui/core/styles";
 import 'hammerjs';
-import {Charts, ChartContainer, ChartRow, EventMarker, YAxis, LineChart, Resizable, ScatterChart} from "react-timeseries-charts";
+import {
+    Charts,
+    ChartContainer,
+    ChartRow,
+    YAxis,
+    LineChart,
+    Resizable,
+    ScatterChart,
+    Baseline,
+    MultiBrush
+} from "react-timeseries-charts";
 import {TimeSeries, TimeRange} from "pondjs";
 
 const styles = theme => ({
@@ -80,31 +90,31 @@ class PlaybackChart extends React.Component {
 
             vitals.map((vital) => {
                 let value
-                if (this.props.data_type == 'Heart Rate'){
+                if (this.props.data_type == 'heartrate') {
                     value = vital._source.heart_rate
-                } else if (this.props.data_type == 'spO2') {
+                } else if (this.props.data_type == 'spo2') {
                     value = vital._source.spo2
                 }
                 let epoch = new Date(vital._source["@timestamp"]).toLocaleString('en-GB');
                 let vitalSign = value
                 let time = new Date(vital._source["@timestamp"]).setMinutes(0, 0, 0)
                 // rounding to gmt+8, 6h mark
-                let time2 = Math.round((time + 28800000)/21600000 ) * 21600000 - 28800000
+                let time2 = Math.round((time + 39600000) / 21600000) * 21600000 - 39600000
                 let point = [time2, value]
                 chartpoints.push(point)
                 labels.push(epoch)
                 newBtcDataSet.data.push(vitalSign);
             })
 
-            let tmp ={};
+            let tmp = {};
             chartpoints.forEach((date) => {
-                let obj =  tmp[date[0]] = tmp[date[0]] || {count:0, total: 0};
-                obj.count ++;
+                let obj = tmp[date[0]] = tmp[date[0]] || {count: 0, total: 0};
+                obj.count++;
                 obj.total += date[1]
             });
 
-            Object.entries(tmp).map((a) =>{
-                chartpointAvg.push([parseFloat(a[0]), a[1].total/a[1].count])
+            Object.entries(tmp).map((a) => {
+                chartpointAvg.push([parseFloat(a[0]), a[1].total / a[1].count])
             })
 
             newDataSet.points = chartpointAvg;
@@ -118,62 +128,67 @@ class PlaybackChart extends React.Component {
             this.setState({lineChartData: newChartData});
             this.setState({chartData: newDataSet})
 
-            let timerange = new TimeRange([this.props.start, this.props.end]);
+            let timerange = new TimeRange([this.props.start, this.props.end + 21600000]);
             this.setState({timerange})
         }
 
     }
 
-    handleTimeRangeChange = timerange => {
-        this.setState({timerange});
-    };
-
-    handleTrackerChanged = t => {
-        if (t) {
-            let dataSet = new TimeSeries(this.state.chartData)
-            const e = dataSet.atTime(t);
-            const eventTime = new Date(
-                e.begin().getTime() + (e.end().getTime() - e.begin().getTime()) / 2
-            );
-            const eventValue = e.get("value");
-            const v = `${eventValue}`;
-            this.setState({tracker: eventTime, trackerValue: v, trackerEvent: e});
-        } else {
-            this.setState({tracker: null, trackerValue: null, trackerEvent: null});
-        }
-    };
-
     render() {
-        let timerange = ""
-        let timeseries = ""
-        if (this.state.chartData.points != null) {
-            timeseries = new TimeSeries(this.state.chartData);
-            timerange = this.state.timerange;
+        if (!this.state.chartData.points || !this.state.chartData || !this.state.timerange){
+            return <div></div>
         }
+
+        const timeseries = new TimeSeries(this.state.chartData);
+        const timerange = this.state.timerange;
+
+        const t0 = this.props.start.valueOf()
+
+        const emptyRanges =[
+            new TimeRange(t0, t0 + 21600000),
+            new TimeRange(t0 + 86400000, t0 + 108000000),
+            new TimeRange(t0 + 172800000, t0 + 194400000),
+            new TimeRange(t0 + 259200000, t0 + 280800000),
+        ]
+
         const style = {
             value: {
-                normal: {stroke: "steelblue", strokeWidth: 5},
-                highlighted: {stroke: "#5a98cb", fill: "none", strokeWidth: 2},
-                selected: {stroke: "steelblue", fill: "none", strokeWidth: 2},
-                muted: {stroke: "steelblue", fill: "none", opacity: 0.4, strokeWidth: 2}
+                normal: {stroke: "black", strokeWidth: 2},
             },
 
         };
-        if (this.state.chartData.points != null) {
+        const stylePoint = {
+            value: {
+                normal: {stroke: "steelblue", strokeWidth: 5},
+            },
+        };
+
+
+
+        if (this.state.chartData.points) {
             return (
                 <div>
                     <Resizable>
                         <ChartContainer
-                            // enablePanZoom={true}
-                            // onTrackerChanged={this.handleTrackerChanged}
-                            // onTimeRangeChanged={this.handleTimeRangeChange}
+                            showGrid={true}
                             timeRange={timerange} width={800}>
                             <ChartRow height="400">
-                                <YAxis id="axis1" label={this.props.data_type} min={timeseries.min()} max={timeseries.max()}
+                                <YAxis id="y"
+                                       label={this.props.data_type == 'heartrate' ? 'Heart Rate (bpm)' : 'Oxygen Saturation (%)'}
+                                       // min={0}
+                                       // max={this.props.data_type == 'heartrate' ? 200 : 100}
+                                       min={this.props.data_type == 'heartrate' ? timeseries.min() - 20 : timeseries.min() - 10}
+                                       max={this.props.data_type == 'heartrate' ? timeseries.max() + 20 : 100}
                                        width="60" type="linear"/>
+
                                 <Charts>
-                                    {/*<LineChart axis="axis1" series={timeseries} style={style}/>*/}
-                                    <ScatterChart axis="axis1" series={timeseries} style={style}/>
+                                    <Baseline axis="y" label="Lower" position="right"
+                                              value={this.props.data_type == 'heartrate' ? 70 : 95}/>
+                                    <Baseline axis="y" label="Upper" position="right"
+                                              value={this.props.data_type == 'heartrate' ? 120 : 200}/>
+                                    <MultiBrush timeRanges={emptyRanges}/>
+                                    <LineChart axis="y" series={timeseries} style={style}/>
+                                    <ScatterChart axis="y" series={timeseries} style={stylePoint}/>
                                 </Charts>
                             </ChartRow>
                         </ChartContainer>

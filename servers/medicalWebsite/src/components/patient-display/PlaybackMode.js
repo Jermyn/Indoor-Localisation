@@ -362,7 +362,7 @@ class PlaybackMode extends Component {
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>
-                            <PlaybackChart vitals={this.state.vitals} data_type = 'Heart Rate' start={moment(this.state.startTime,'YYYY-MM-DDThh:mm' )} end={moment(this.state.endTime,'YYYY-MM-DDThh:mm' )}/>
+                            <PlaybackChart vitals={this.state.vitals} data_type = 'heartrate' start={moment(this.state.startTime,'YYYY-MM-DDThh:mm' )} end={moment(this.state.endTime,'YYYY-MM-DDThh:mm' )}/>
                         </div>
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
@@ -372,7 +372,7 @@ class PlaybackMode extends Component {
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>
-                            <PlaybackChart vitals={this.state.vitals} data_type = 'spO2' start={moment(this.state.startTime,'YYYY-MM-DDThh:mm' )} end={moment(this.state.endTime,'YYYY-MM-DDThh:mm' )}/>
+                            <PlaybackChart vitals={this.state.vitals} data_type = 'spo2' start={moment(this.state.startTime,'YYYY-MM-DDThh:mm' )} end={moment(this.state.endTime,'YYYY-MM-DDThh:mm' )}/>
                         </div>
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
