@@ -127,7 +127,7 @@ class PatientDashboard extends Component {
         const patient = this.props.patients.find(patient => patient.devices[0].id == id)
         if (patient) {
             this.props.loadInfo(patient);
-            this.props.history.push('/patientInfo');
+            this.props.history.push('/patientInfo2');
         } else {
             console.log('invalid patient')
         }
