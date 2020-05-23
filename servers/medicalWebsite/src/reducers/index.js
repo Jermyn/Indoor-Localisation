@@ -7,7 +7,6 @@ import {
     ASSIGN_DEVICES,
     ASSIGN_ROOM,
     EDIT_ROOM,
-    ASSIGNANCHOR_TOROOM,
     CONFIRM_TYPE,
     ADD_PATIENT,
     EDIT_PATIENT,
@@ -147,8 +146,6 @@ const rootReducer = (state = initialState, action) => {
             return {...state, assignRoom: action.payload};
         case EDIT_ROOM:
             return {...state, edit: action.payload};
-        case ASSIGNANCHOR_TOROOM:
-            return {...state, edit: action.payload};
         case CONFIRM_TYPE:
             return {...state, confirmType: action.payload};
         case ADD_PATIENT:
@@ -265,9 +262,9 @@ const rootReducer = (state = initialState, action) => {
             })
 
         case FETCH_DASHBOARD_PATIENTS:
-            return {...state, patients_d: action.payload};
+            return {...state, patients_es: action.payload};
         case FETCH_DASHBOARD_PATIENTS_2:
-            return {...state, patients_d: action.payload};
+            return {...state, patients_es: action.payload};
         default:
             return state;
     }

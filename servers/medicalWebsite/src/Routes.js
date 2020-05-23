@@ -14,7 +14,6 @@ import AddConfirmation from "./AddConfirmation"
 import AddDevice from "./AddDevice"
 import PatientDashboard from "./components/dashboard/PatientDashboard";
 import AssignAnchors from "./AssignAnchors"
-import AnchorInfo from "./anchorInfo"
 import anchorInfo from "./anchorInfo";
 
 export default () =>

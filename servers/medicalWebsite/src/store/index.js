@@ -28,14 +28,13 @@ const initialState = {
   simulation: ""
 };
 
-// const store = createStore(rootReducer,
-//     initialState,
-//     compose(
-//         applyMiddleware(reduxThunk),
-//         window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-//     )
-// );
-const store = createStore(rootReducer, initialState, applyMiddleware(reduxThunk));
+const store = createStore(rootReducer,
+    initialState,
+    // compose(
+    applyMiddleware(reduxThunk)
+        // window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+    // )
+);
 store.dispatch(Actions.verifyAuth())
 store.dispatch(Actions.readPatients())
 store.dispatch(Actions.readAssets())

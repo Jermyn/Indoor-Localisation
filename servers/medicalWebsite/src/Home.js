@@ -215,16 +215,16 @@ render() {
                   <AddIcon /> Patient
                 </Button>
               </Grid>
-              {/* <Grid item>
+              <Grid item>
                 <Button component={Link} to="/addAsset" variant="outlined" color="primary" className={classes.addButton}>
                   <AddIcon /> Asset
                 </Button>
-              </Grid> */}
-              {/* <Grid item>
+              </Grid>
+              <Grid item>
                 <Button component={Link} to="/addStaff" variant="outlined" color="primary" className={classes.addButton} >
                   <AddIcon /> Staff
                 </Button>
-              </Grid> */}
+              </Grid>
             </Grid>
           </Grid>
           <Grid item xs={12}>
@@ -260,7 +260,7 @@ render() {
                   </CardActionArea>
                 </Card>
               </Grid>
-              {/* <Grid item>
+              <Grid item>
                 <Card className={classes.card}>
                   <CardActionArea
                     component={Link}
@@ -283,7 +283,7 @@ render() {
                     </CardContent>
                   </CardActionArea>
                 </Card>
-              </Grid> */}
+              </Grid>
               <Grid item>
                 <Card className={classes.card}>
                   <CardActionArea
