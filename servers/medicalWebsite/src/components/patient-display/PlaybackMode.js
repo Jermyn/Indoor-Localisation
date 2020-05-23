@@ -135,14 +135,18 @@ const mapDispatchToProps = dispatch => {
     };
 };
 
+const DURATION_1H = 3600000
+const DURATION_6H = 21600000
+const DURATION_1D = 86400000
+
 class PlaybackMode extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            startTime: moment(Date.now() - 172800000).format("YYYY-MM-DDT00:00"),
-            endTime: moment(Date.now() + 86400000).format("YYYY-MM-DDT00:00"),
-            ecg: [],
+            startTime: moment(Date.now() - DURATION_1D*2).format("YYYY-MM-DDT00:00"),
+            endTime: moment(Date.now() + DURATION_1D).format("YYYY-MM-DDT00:00"),
+            showAll: false,
             vitals: [],
             submittedForm: false,
             values: {},
@@ -157,7 +161,7 @@ class PlaybackMode extends Component {
     }
 
     componentDidMount() {
-        if (this.props.info != ""){
+        if (this.props.info != "") {
             this.setState({
                 devices: this.props.info.devices.map(function (x) {
                     return x.id
@@ -184,13 +188,6 @@ class PlaybackMode extends Component {
         this.setState({[prop]: event.target.value});
     };
 
-    updateStart = (e) => {
-        this.setState({startTime: e.target.value})
-    }
-
-    updateEnd = (e) => {
-        this.setState({endTime: e.target.value})
-    }
 
     submitQuery = (index, devices) => {
         let timeStart = this.state.startTime
@@ -284,13 +281,25 @@ class PlaybackMode extends Component {
                 })
         }
         if (unixStart <= unixEnd) {
-            // this.submitQuery('ecg');
             this.submitQuery('vitals', this.state.devices);
             this.setState({error: ""})
         } else {
             this.setState({error: 'Time range is invalid'})
         }
 
+    }
+
+    fetchAllData = () => {
+        if (this.state.vitals && this.state.vitals.length>0){
+            this.setState({
+                // startTime: moment(Date(this.state.vitals[0]._source["@timestamp"])).format("YYYY-MM-DDT00:00")
+                startTime: moment(0).format("YYYY-MM-DDT00:00")
+            }, () => {
+                this.submitForm()
+            });
+
+
+        }
     }
 
     renderPlaybackForm = (loading, success, errorButton) => {
@@ -301,48 +310,9 @@ class PlaybackMode extends Component {
         });
         let form = <div>
             <form className={classes.container} noValidate>
-
-                <TextField
-                    id="datetime-local"
-                    label="Start"
-                    variant="outlined"
-                    type="datetime-local"
-                    style={{marginRight: '1em', marginBottom: '1em'}}
-                    defaultValue={this.state.startTime}
-                    className={classes.textField}
-                    onChange={this.updateStart}
-                    error={this.state.error == "" ? false : true}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-
-                <TextField
-                    id="datetime-local"
-                    label="End"
-                    variant="outlined"
-                    type="datetime-local"
-                    defaultValue={this.state.endTime}
-                    className={classes.textField}
-                    onChange={this.updateEnd}
-                    error={this.state.error == "" ? false : true}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-                <div className={classes.wrapper}>
-                    <Button variant="contained" color="primary" onClick={this.submitForm} className={buttonClassname}>
-                        {success ? <CheckIcon/> : errorButton ? <ErrorOutlineOutlinedIcon/> : "Fetch"}
-                        {/* {error ? <ErrorOutlineOutlinedIcon /> : "Fetch"} */}
-                    </Button>
-                    {loading && <CircularProgress size={24} className={classes.buttonProgress}/>}
-                </div>
-                {errorButton ?
-                    <div>
-                        <Typography variant="subtitle1" style={{color: 'red'}}>
-                            {errorButton}
-                        </Typography>
-                    </div> : ""}
+                <Button variant="contained" color="primary" onClick={this.fetchAllData} className={buttonClassname}>
+                    Fetch
+                </Button>
             </form>
         </div>
 
@@ -354,15 +324,17 @@ class PlaybackMode extends Component {
         const {loading, success, errorButton, expanded} = this.state;
         return (
             <div className={classes.root}>
-                {/*{this.renderPlaybackForm(loading, success, errorButton)}*/}
-                {/*<div><Typography variant="subtitle1" style={{color: 'red'}}> {this.state.error}  </Typography></div>*/}
+                {this.renderPlaybackForm(loading, success, errorButton)}
+                <div><Typography variant="subtitle1" style={{color: 'red'}}> {this.state.error}  </Typography></div>
                 <ExpansionPanel expanded={expanded}>
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
                         <Typography variant="subtitle1" gutterBottom>Heart Rate</Typography>
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>
-                            <PlaybackChart vitals={this.state.vitals} data_type = 'heartrate' start={moment(this.state.startTime,'YYYY-MM-DDThh:mm' )} end={moment(this.state.endTime,'YYYY-MM-DDThh:mm' )}/>
+                            <PlaybackChart vitals={this.state.vitals} data_type='heartrate'
+                                           start={moment(this.state.startTime, 'YYYY-MM-DDThh:mm')}
+                                           end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}/>
                         </div>
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
@@ -372,7 +344,10 @@ class PlaybackMode extends Component {
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>
-                            <PlaybackChart vitals={this.state.vitals} data_type = 'spo2' start={moment(this.state.startTime,'YYYY-MM-DDThh:mm' )} end={moment(this.state.endTime,'YYYY-MM-DDThh:mm' )}/>
+                            <PlaybackChart vitals={this.state.vitals} data_type='spo2'
+                                           start={moment(this.state.startTime, 'YYYY-MM-DDThh:mm')}
+                                           end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}
+                                           showAll={this.state.showAll}/>
                         </div>
                     </ExpansionPanelDetails>
                 </ExpansionPanel>

@@ -21,6 +21,10 @@ const styles = theme => ({
     }
 });
 
+const DURATION_1H = 3600000
+const DURATION_6H = 21600000
+const DURATION_1D = 86400000
+
 class PlaybackChart extends React.Component {
 
     state = {
@@ -30,6 +34,7 @@ class PlaybackChart extends React.Component {
             points: null
         },
         timerange: "",
+        emptyrange:[],
         tracker: null,
         trackerValue: "--",
         trackerEvent: null,
@@ -98,8 +103,8 @@ class PlaybackChart extends React.Component {
                 let epoch = new Date(vital._source["@timestamp"]).toLocaleString('en-GB');
                 let vitalSign = value
                 let time = new Date(vital._source["@timestamp"]).setMinutes(0, 0, 0)
-                // rounding to gmt+8, 6h mark
-                let time2 = Math.round((time + 39600000) / 21600000) * 21600000 - 39600000
+                // rounding to gmt+8, 6h mark, shift by 3
+                let time2 = Math.round((time + DURATION_1H*(8+3)) / DURATION_6H) * DURATION_6H - DURATION_1H*(8+3)
                 let point = [time2, value]
                 chartpoints.push(point)
                 labels.push(epoch)
@@ -128,8 +133,23 @@ class PlaybackChart extends React.Component {
             this.setState({lineChartData: newChartData});
             this.setState({chartData: newDataSet})
 
-            let timerange = new TimeRange([this.props.start, this.props.end + 21600000]);
+            const emptyrange = []
+            const t0 = this.props.start.valueOf()
+
+            let timerange
+            if (this.props.showAll && (this.props.end - this.props.start > DURATION_1D*5)){
+                timerange = new TimeRange([this.props.start, this.props.end]);
+            } else{
+                timerange = new TimeRange([this.props.start, this.props.end + DURATION_6H]);
+
+                //maximum 5 days
+                Array.from(Array(5)).forEach((x, i) => {
+                    emptyrange.push(new TimeRange(t0 + i * DURATION_1D, t0 + i * DURATION_1D + DURATION_6H))
+                });
+            }
+
             this.setState({timerange})
+            this.setState({emptyrange})
         }
 
     }
@@ -138,18 +158,8 @@ class PlaybackChart extends React.Component {
         if (!this.state.chartData.points || !this.state.chartData || !this.state.timerange){
             return <div></div>
         }
-
         const timeseries = new TimeSeries(this.state.chartData);
         const timerange = this.state.timerange;
-
-        const t0 = this.props.start.valueOf()
-
-        const emptyRanges =[
-            new TimeRange(t0, t0 + 21600000),
-            new TimeRange(t0 + 86400000, t0 + 108000000),
-            new TimeRange(t0 + 172800000, t0 + 194400000),
-            new TimeRange(t0 + 259200000, t0 + 280800000),
-        ]
 
         const style = {
             value: {
@@ -163,7 +173,8 @@ class PlaybackChart extends React.Component {
             },
         };
 
-
+        const tickCount = Math.min(Math.floor((this.props.end.valueOf() - this.props.start.valueOf())/DURATION_6H), 20)
+        console.log(tickCount,Math.min(Math.floor((this.props.end.valueOf() - this.props.start.valueOf())/DURATION_6H) ))
 
         if (this.state.chartData.points) {
             return (
@@ -171,7 +182,9 @@ class PlaybackChart extends React.Component {
                     <Resizable>
                         <ChartContainer
                             showGrid={true}
-                            timeRange={timerange} width={800}>
+                            timeRange={timerange} width={800}
+                            timeAxisTickCount={tickCount}
+                        >
                             <ChartRow height="400">
                                 <YAxis id="y"
                                        label={this.props.data_type == 'heartrate' ? 'Heart Rate (bpm)' : 'Oxygen Saturation (%)'}
@@ -186,7 +199,7 @@ class PlaybackChart extends React.Component {
                                               value={this.props.data_type == 'heartrate' ? 70 : 95}/>
                                     <Baseline axis="y" label="Upper" position="right"
                                               value={this.props.data_type == 'heartrate' ? 120 : 200}/>
-                                    <MultiBrush timeRanges={emptyRanges}/>
+                                    <MultiBrush timeRanges={this.state.emptyrange}/>
                                     <LineChart axis="y" series={timeseries} style={style}/>
                                     <ScatterChart axis="y" series={timeseries} style={stylePoint}/>
                                 </Charts>

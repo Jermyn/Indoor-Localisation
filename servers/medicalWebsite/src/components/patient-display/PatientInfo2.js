@@ -162,8 +162,6 @@ class PatientInfo2 extends Component {
             this.setState({name: this.props.info.name})
             this.setState({devices: this.props.info.devices})
 
-            console.log('info', this.props.info.name, this.props.info.devices[0].id)
-
             let devices = this.props.info.devices
             if (devices != null && devices[0] != "None") {
                 devices.map((device) => {
@@ -257,6 +255,10 @@ class PatientInfo2 extends Component {
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
 
+        if (!this.props.info){
+            return <div></div>
+        }
+
         return (
             <div className={classes.root}>
                 <AppBar position="static" style={{boxShadow: "none", backgroundColor: "white"}}>
@@ -303,11 +305,11 @@ class PatientInfo2 extends Component {
                 </ClickAwayListener>
                 <Grid container justify="center">
                     <Grid container className={classes.demo}>
-
                         <Card className={classes.card}>
                             <CardContent>
                                 <Grid item xs={12}>
                                     <Typography variant="h6" gutterBottom>Name: {this.props.info.name}</Typography>
+                                    <Typography variant="h6" gutterBottom>Bed: {this.props.info.bed.id}</Typography>
                                 </Grid>
                                 <Grid item xs={12}> <ConnectedPlaybackMode/> </Grid>
                             </CardContent>
