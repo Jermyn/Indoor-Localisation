@@ -127,7 +127,8 @@ class PatientDashboard extends Component {
         const patient = this.props.patients.find(patient => patient.devices[0].id == id)
         if (patient) {
             this.props.loadInfo(patient);
-            this.props.history.push('/patientInfo');
+            console.log('1', patient)
+            this.props.history.push('/patientInfo2');
         } else {
             console.log('invalid patient')
         }
@@ -220,7 +221,7 @@ class PatientDashboard extends Component {
                         <Grid container className={classes.gridContainerRoom} key={room.id}>
                             <Grid item xs={12}>
                                 <Typography gutterBottom variant="h5" onClick={() => {console.log('click room')}}>
-                                    <strong>{room.id}</strong>
+                                    <strong>{room.name}</strong>
                                 </Typography>
                             </Grid>
                             {room.devices && this.props.patients_es.filter(p => room.devices.some(d => d.id === p.id)).map((patient) => {
@@ -257,4 +258,3 @@ class PatientDashboard extends Component {
 const ConnectedDashboard = connect(mapStateToProps, mapDispatchToProps)(PatientDashboard);
 
 export default withStyles(styles)(ConnectedDashboard);
-

@@ -1,0 +1,363 @@
+import React, {Component} from 'react';
+import axios from 'axios'
+import moment from 'moment';
+import classNames from 'classnames';
+import {connect} from "react-redux";
+
+import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
+import {green, red} from '@material-ui/core/colors';
+import Typography from '@material-ui/core/Typography';
+import CheckIcon from '@material-ui/icons/Check';
+import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
+import {withStyles} from '@material-ui/core/styles';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+
+import PlaybackChart from './PlaybackChart'
+
+import {addUsername} from "../../actions/index";
+
+const styles = theme => ({
+    container: {
+        display: 'flex',
+        flexWrap: 'wrap',
+    },
+    root: {
+        flexGrow: 1,
+    },
+    grow: {
+        flexGrow: 1,
+    },
+    card: {
+        minWidth: 275,
+        padding: '1.5rem',
+        flexGrow: '1',
+    },
+    textField: {
+        // marginLeft: theme.spacing.unit,
+        // marginRight: theme.spacing.unit,
+    },
+    borderBox: {
+        border: '1px solid',
+        padding: '2rem',
+        borderRadius: '16px',
+    },
+    menu: {
+        width: 200,
+    },
+    menuButton: {
+        marginLeft: -12,
+        marginRight: 20,
+        opacity: 0.4,
+        color: 'black',
+    },
+    align: {
+        padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${theme.spacing.unit * 3}px`,
+    },
+    label: {
+        textTransform: 'capitalize',
+    },
+    cameraIcon: {
+        opacity: '0.5',
+        paddingLeft: '10px'
+    },
+    cardContent: {
+        paddingBottom: '16px'
+    },
+    demo: {
+        padding: '16px 32px 24px',
+        // [theme.breakpoints.up("sm")]: {
+        //   width: '560px'
+        // }
+    },
+    demoOne: {
+        padding: '16px 32px 5px',
+        // [theme.breakpoints.up("sm")]: {
+        //   width: '560px'
+        // }
+    },
+    toggleContainer: {
+        height: 56,
+        padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        margin: `${theme.spacing.unit}px 0`,
+    },
+    button: {
+        margin: theme.spacing.unit,
+        backgroundColor: green[500],
+        '&:hover': {
+            backgroundColor: green[700],
+        },
+    },
+    buttonProgress: {
+        color: green[500],
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginTop: -12,
+        marginLeft: -12,
+    },
+    buttonSuccess: {
+        backgroundColor: green[500],
+        '&:hover': {
+            backgroundColor: green[700],
+        },
+    },
+    buttonError: {
+        backgroundColor: red[500],
+        '&:hover': {
+            backgroundColor: red[700],
+        },
+    },
+    wrapper: {
+        margin: theme.spacing.unit,
+        position: 'relative',
+    },
+});
+
+const mapStateToProps = state => {
+    return {
+        beacon: state.beacon,
+        vitals: state.vitals,
+        info: state.info,
+    };
+};
+
+const mapDispatchToProps = dispatch => {
+    return {
+        addUsername: username => dispatch(addUsername(username))
+    };
+};
+
+const DURATION_1H = 3600000
+const DURATION_6H = 21600000
+const DURATION_1D = 86400000
+
+class PlaybackMode extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            startTime: moment(Date.now() - DURATION_1D*2).format("YYYY-MM-DDT00:00"),
+            endTime: moment(Date.now() + DURATION_1D).format("YYYY-MM-DDT00:00"),
+            showAll: false,
+            vitals: [],
+            submittedForm: false,
+            values: {},
+            beacon: this.props.beacon,
+            devices: [],
+            loading: false,
+            success: false,
+            error: "",
+            errorButton: "",
+            expanded: false,
+        };
+    }
+
+    componentDidMount() {
+        if (this.props.info != "") {
+            this.setState({
+                devices: this.props.info.devices.map(function (x) {
+                    return x.id
+                })
+            }, () => {
+                this.submitForm()
+            });
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (this.props.vitals !== prevProps.vitals) {
+            this.setState({vitals: this.props.vitals})
+        }
+    }
+
+    handleLoading = () => {
+        this.setState(state => ({
+            loading: !state.loading,
+        }))
+    }
+
+    handleChange = prop => event => {
+        this.setState({[prop]: event.target.value});
+    };
+
+
+    submitQuery = (index, devices) => {
+        let timeStart = this.state.startTime
+        let timeEnd = this.state.endTime
+        timeStart = timeStart + ':00'
+        timeEnd = timeEnd + ':00'
+        const query = {
+            "size": 10000,
+            "sort": [{"@timestamp": {"order": "asc"}}],
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "term": {
+                                "gattid": `${devices}`
+                            }
+                        },
+                        {
+                            "range": {
+                                "@timestamp": {
+                                    "gte": timeStart,
+                                    "lte": timeEnd,
+                                    "time_zone": "+08:00"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        };
+
+        axios.get(`/zmq/vitals/_search?scroll=1m`, {
+            params: {
+                source: JSON.stringify(query),
+                source_content_type: 'application/json'
+            }
+        }).then((res) => {
+            let fullTrace = res.data.hits.hits
+            let fullShot = []
+            fullShot = fullShot.concat(fullTrace)
+
+            let scroll_id = res.data._scroll_id
+            let scrollQuery = {
+                "scroll": "1m",
+                "scroll_id": scroll_id
+            }
+            this.getAPI(scrollQuery, fullShot, index, devices)
+        });
+    }
+
+    getAPI = (scrollQuery, fullShot, index, devices) => {
+        axios.get(`/_search/scroll`, {
+            params: {
+                source: JSON.stringify(scrollQuery),
+                source_content_type: 'application/json'
+            }
+        }).then((res) => {
+            let fullTrace = res.data.hits.hits
+            fullShot = fullShot.concat(fullTrace)
+            let scroll_id = res.data._scroll_id
+            let scrollQuery = {
+                'scroll': '1m',
+                'scroll_id': scroll_id
+            }
+            let scroll_size = res.data.hits.hits.length
+            console.log(fullShot)
+            if (scroll_size > 0) {
+                this.getAPI(scrollQuery, fullShot, index, devices)
+            } else {
+                if (fullShot.length > 0) {
+                    this.setState({[index]: fullShot})
+                    this.setState({success: true})
+                    this.setState({loading: false})
+                    this.setState({expanded: true})
+                } else {
+                    this.setState({loading: false})
+                    this.setState({errorButton: "There is no data for " + `${devices}` + ". Please change patient or device."})
+                }
+            }
+        })
+    }
+
+    submitForm = () => {
+        let unixStart = new Date(this.state.startTime)
+        let unixEnd = new Date(this.state.endTime)
+        if (!this.state.loading) {
+            this.setState(
+                {
+                    success: false,
+                    loading: true,
+                })
+        }
+        if (unixStart <= unixEnd) {
+            this.submitQuery('vitals', this.state.devices);
+            this.setState({error: ""})
+        } else {
+            this.setState({error: 'Time range is invalid'})
+        }
+
+    }
+
+    fetchAllData = () => {
+        if (this.state.vitals && this.state.vitals.length>0){
+            this.setState({
+                // startTime: moment(Date(this.state.vitals[0]._source["@timestamp"])).format("YYYY-MM-DDT00:00")
+                startTime: moment(0).format("YYYY-MM-DDT00:00")
+            }, () => {
+                this.submitForm()
+            });
+
+
+        }
+    }
+
+    renderPlaybackForm = (loading, success, errorButton) => {
+        const {classes} = this.props;
+        const buttonClassname = classNames({
+            [classes.button]: success,
+            [classes.buttonError]: errorButton
+        });
+        let form = <div>
+            <form className={classes.container} noValidate>
+                <Button variant="contained" color="primary" onClick={this.fetchAllData} className={buttonClassname}>
+                    Fetch
+                </Button>
+            </form>
+        </div>
+
+        return form
+    }
+
+    render() {
+        const {classes} = this.props;
+        const {loading, success, errorButton, expanded} = this.state;
+        console.log (this.state.vitals)
+        return (
+            <div className={classes.root}>
+                {this.renderPlaybackForm(loading, success, errorButton)}
+                <div><Typography variant="subtitle1" style={{color: 'red'}}> {this.state.error}  </Typography></div>
+                <ExpansionPanel expanded={expanded}>
+                    <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
+                        <Typography variant="subtitle1" gutterBottom>Heart Rate</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                        <div style={{width: '100%'}}>
+                            <PlaybackChart vitals={this.state.vitals} data_type='heartrate'
+                                           start={moment(this.state.startTime, 'YYYY-MM-DDThh:mm')}
+                                           end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}/>
+                        </div>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
+                <ExpansionPanel expanded={expanded}>
+                    <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
+                        <Typography variant="subtitle1" gutterBottom>SPO2</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                        <div style={{width: '100%'}}>
+                            <PlaybackChart vitals={this.state.vitals} data_type='spo2'
+                                           start={moment(this.state.startTime, 'YYYY-MM-DDThh:mm')}
+                                           end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}
+                                           showAll={this.state.showAll}/>
+                        </div>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
+
+            </div>
+        )
+    }
+}
+
+const ConnectedPlaybackMode = connect(mapStateToProps, mapDispatchToProps)(PlaybackMode);
+
+export default withStyles(styles)(ConnectedPlaybackMode);

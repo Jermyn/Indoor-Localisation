@@ -1,4 +1,4 @@
-import React from "react";
+    import React from "react";
 import { Route, Switch } from "react-router-dom";
 import Home from "./Home";
 import Login from "./Login";
@@ -9,9 +9,9 @@ import LocationTracking from "./LocationTracking";
 import ContactTracing from "./ContactTracing";
 import ContactTracingResults from "./ContactTracingResults";
 import PatientInfo from "./PatientInfo";
+import PatientInfo2 from "./components/patient-display/PatientInfo2";
 import AssetStaffInfo from "./AssetStaffInfo"
 import AddConfirmation from "./AddConfirmation"
-import AddDevice from "./AddDevice"
 import PatientDashboard from "./components/dashboard/PatientDashboard";
 import AssignAnchors from "./AssignAnchors"
 import anchorInfo from "./anchorInfo";
@@ -28,6 +28,7 @@ export default () =>
     <Route path="/contactTracing" exact component={ContactTracing} />
     <Route path="/contactTracingResults" exact component={ContactTracingResults} />
     <Route path="/patientInfo" exact component={PatientInfo} />
+    <Route path="/patientInfo2" exact component={PatientInfo2} />
     <Route path="/staffInfo" exact component={AssetStaffInfo} />
     <Route path="/assetInfo" exact component={AssetStaffInfo} />
     <Route path="/addConfirmation" exact component={AddConfirmation} />
