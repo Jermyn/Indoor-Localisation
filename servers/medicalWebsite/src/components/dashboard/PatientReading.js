@@ -45,9 +45,9 @@ class PatientReading extends React.Component {
         // 3hrs = 10800000
         if (tCur - tLatest > 10800000) {
             status = classes.inactive
-        } else if (this.props.patient["heart_rate"] < 140 && this.props.patient["heart_rate"] > 30) {
+        } else if (this.props.patient["heart_rate"] < 120 && this.props.patient["heart_rate"] > 70 && this.props.patient["spo2"] > 95) {
             status = classes.normal
-        } else if (this.props.patient["heart_rate"] < 155 && this.props.patient["heart_rate"] > 20) {
+        } else if (this.props.patient["heart_rate"] < 120 || this.props.patient["heart_rate"] > 70 || this.props.patient["spo2"] > 95) {
             status = classes.warning
         } else {
             status = classes.error

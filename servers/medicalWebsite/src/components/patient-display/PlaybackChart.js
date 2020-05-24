@@ -34,7 +34,7 @@ class PlaybackChart extends React.Component {
             points: null
         },
         timerange: "",
-        emptyrange:[],
+        emptyrange: [],
         tracker: null,
         trackerValue: "--",
         trackerEvent: null,
@@ -104,7 +104,7 @@ class PlaybackChart extends React.Component {
                 let vitalSign = value
                 let time = new Date(vital._source["@timestamp"]).setMinutes(0, 0, 0)
                 // rounding to gmt+8, 6h mark, shift by 3
-                let time2 = Math.round((time + DURATION_1H*(8+3)) / DURATION_6H) * DURATION_6H - DURATION_1H*(8+3)
+                let time2 = Math.round((time + DURATION_1H * (8 + 3)) / DURATION_6H) * DURATION_6H - DURATION_1H * (8 + 3)
                 let point = [time2, value]
                 chartpoints.push(point)
                 labels.push(epoch)
@@ -132,30 +132,38 @@ class PlaybackChart extends React.Component {
 
             this.setState({lineChartData: newChartData});
             this.setState({chartData: newDataSet})
+        }
 
+        if (this.props.start !== prevProps.start) {
             const emptyrange = []
-            const t0 = this.props.start.valueOf()
-
+            let start = this.props.start
+            let end = this.props.end
+            let epoch = this.props.start.valueOf()
             let timerange
-            if (this.props.showAll && (this.props.end - this.props.start > DURATION_1D*5)){
-                timerange = new TimeRange([this.props.start, this.props.end]);
-            } else{
-                timerange = new TimeRange([this.props.start, this.props.end + DURATION_6H]);
 
-                //maximum 5 days
-                Array.from(Array(5)).forEach((x, i) => {
-                    emptyrange.push(new TimeRange(t0 + i * DURATION_1D, t0 + i * DURATION_1D + DURATION_6H))
+            if (epoch === 0) {
+                epoch = new Date(this.props.vitals[0]._source["@timestamp"]).setHours(0, 0, 0, 0)
+                start = moment(epoch)
+            }
+
+            if (end - start > DURATION_1D * 30) {
+                timerange = new TimeRange([start, end + DURATION_6H]);
+            } else {
+                timerange = new TimeRange([start, end + DURATION_6H]);
+
+                //maximum 30 days
+                Array.from(Array(30)).forEach((x, i) => {
+                    emptyrange.push(new TimeRange(epoch + i * DURATION_1D, epoch + i * DURATION_1D + DURATION_6H))
                 });
             }
 
             this.setState({timerange})
             this.setState({emptyrange})
         }
-
     }
 
     render() {
-        if (!this.state.chartData.points || !this.state.chartData || !this.state.timerange){
+        if (!this.state.chartData.points || !this.state.chartData || !this.state.timerange) {
             return <div></div>
         }
         const timeseries = new TimeSeries(this.state.chartData);
@@ -173,8 +181,9 @@ class PlaybackChart extends React.Component {
             },
         };
 
-        const tickCount = Math.min(Math.floor((this.props.end.valueOf() - this.props.start.valueOf())/DURATION_6H), 20)
-        console.log(tickCount,Math.min(Math.floor((this.props.end.valueOf() - this.props.start.valueOf())/DURATION_6H) ))
+        const tickCount = (timerange.duration() < DURATION_1D * 15) ?
+            Math.ceil((timerange.duration()) / DURATION_6H) :
+            Math.min(Math.ceil((timerange.duration()) / DURATION_1D), 30)
 
         if (this.state.chartData.points) {
             return (
@@ -188,8 +197,8 @@ class PlaybackChart extends React.Component {
                             <ChartRow height="400">
                                 <YAxis id="y"
                                        label={this.props.data_type == 'heartrate' ? 'Heart Rate (bpm)' : 'Oxygen Saturation (%)'}
-                                       // min={0}
-                                       // max={this.props.data_type == 'heartrate' ? 200 : 100}
+                                    // min={0}
+                                    // max={this.props.data_type == 'heartrate' ? 200 : 100}
                                        min={this.props.data_type == 'heartrate' ? timeseries.min() - 20 : timeseries.min() - 10}
                                        max={this.props.data_type == 'heartrate' ? timeseries.max() + 20 : 100}
                                        width="60" type="linear"/>
