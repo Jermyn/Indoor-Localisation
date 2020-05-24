@@ -147,7 +147,7 @@ class PlaybackMode extends Component {
             startTime: moment(Date.now() - DURATION_1D*2).format("YYYY-MM-DDT00:00"),
             endTime: moment(Date.now() + DURATION_1D).format("YYYY-MM-DDT00:00"),
             showAll: false,
-            vitals: [],
+            vital: [],
             submittedForm: false,
             values: {},
             beacon: this.props.beacon,
@@ -271,35 +271,16 @@ class PlaybackMode extends Component {
     }
 
     submitForm = () => {
-        let unixStart = new Date(this.state.startTime)
-        let unixEnd = new Date(this.state.endTime)
-        if (!this.state.loading) {
-            this.setState(
-                {
-                    success: false,
-                    loading: true,
-                })
-        }
-        if (unixStart <= unixEnd) {
-            this.submitQuery('vitals', this.state.devices);
-            this.setState({error: ""})
-        } else {
-            this.setState({error: 'Time range is invalid'})
-        }
-
+        this.submitQuery('vital', this.state.devices);
     }
 
     fetchAllData = () => {
-        if (this.state.vitals && this.state.vitals.length>0){
-            this.setState({
-                // startTime: moment(Date(this.state.vitals[0]._source["@timestamp"])).format("YYYY-MM-DDT00:00")
-                startTime: moment(0).format("YYYY-MM-DDT00:00")
-            }, () => {
-                this.submitForm()
-            });
+        this.setState({
+            startTime: moment(0).format("YYYY-MM-DDThh:mm")
+        }, () => {
+            this.submitForm()
+        })
 
-
-        }
     }
 
     renderPlaybackForm = (loading, success, errorButton) => {
@@ -311,7 +292,7 @@ class PlaybackMode extends Component {
         let form = <div>
             <form className={classes.container} noValidate>
                 <Button variant="contained" color="primary" onClick={this.fetchAllData} className={buttonClassname}>
-                    Fetch
+                    Get All Days
                 </Button>
             </form>
         </div>
@@ -322,7 +303,6 @@ class PlaybackMode extends Component {
     render() {
         const {classes} = this.props;
         const {loading, success, errorButton, expanded} = this.state;
-        console.log (this.state.vitals)
         return (
             <div className={classes.root}>
                 {this.renderPlaybackForm(loading, success, errorButton)}
@@ -333,7 +313,7 @@ class PlaybackMode extends Component {
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>
-                            <PlaybackChart vitals={this.state.vitals} data_type='heartrate'
+                            <PlaybackChart vitals={this.state.vital} data_type='heartrate'
                                            start={moment(this.state.startTime, 'YYYY-MM-DDThh:mm')}
                                            end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}/>
                         </div>
@@ -345,14 +325,12 @@ class PlaybackMode extends Component {
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>
-                            <PlaybackChart vitals={this.state.vitals} data_type='spo2'
+                            <PlaybackChart vitals={this.state.vital} data_type='spo2'
                                            start={moment(this.state.startTime, 'YYYY-MM-DDThh:mm')}
-                                           end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}
-                                           showAll={this.state.showAll}/>
+                                           end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}/>
                         </div>
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
-
             </div>
         )
     }

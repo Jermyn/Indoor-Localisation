@@ -218,7 +218,7 @@ class PatientDashboard extends Component {
                 </ClickAwayListener>
                 <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='center'>
                     {this.props.rooms && this.props.rooms.map((room) => (
-                        <Grid container className={classes.gridContainerRoom} key={room.id}>
+                        <Grid container className={classes.gridContainerRoom} key={room.name}>
                             <Grid item xs={12}>
                                 <Typography gutterBottom variant="h5" onClick={() => {console.log('click room')}}>
                                     <strong>{room.name}</strong>
