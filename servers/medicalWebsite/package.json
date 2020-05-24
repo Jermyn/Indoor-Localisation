@@ -2,6 +2,7 @@
   "name": "medicalportal",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://137.132.165.139:9200",
   "dependencies": {
     "@mapbox/maki": "^6.0.0",
     "@mapbox/mapbox-gl-draw": "^1.1.1",
