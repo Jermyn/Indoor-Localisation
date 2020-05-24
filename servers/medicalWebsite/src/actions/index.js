@@ -586,7 +586,7 @@ export const fetchContactTrace = (traceDetails) => async dispatch => {
 
 function getAPI(scrollQuery, fullShot) {
 
-    axios.get(`http://137.132.165.139:9200/_search/scroll`, {
+    axios.get(`/_search/scroll`, {
         params: {
             source: JSON.stringify(scrollQuery),
             source_content_type: 'application/json'

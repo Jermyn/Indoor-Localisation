@@ -340,7 +340,7 @@ class PlaybackMode extends Component {
             }
         };
 
-        axios.get(`http://137.132.165.139:9200/zmq/vitals/_search?scroll=1m`, {
+        axios.get(`/zmq/vitals/_search?scroll=1m`, {
             params: {
                 source: JSON.stringify(query),
                 source_content_type: 'application/json'
@@ -370,7 +370,7 @@ class PlaybackMode extends Component {
     }
 
     getAPI = (scrollQuery, fullShot, index, devices) => {
-        axios.get(`http://137.132.165.139:9200/_search/scroll`, {
+        axios.get(`/_search/scroll`, {
             params: {
                 source: JSON.stringify(scrollQuery),
                 source_content_type: 'application/json'
