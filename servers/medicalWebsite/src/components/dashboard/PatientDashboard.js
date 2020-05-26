@@ -100,7 +100,7 @@ class PatientDashboard extends Component {
         this.props.fetchRooms()
         this.props.readPatients()
         this.updatePatientsES()
-        this.timer = setInterval(() => this.updatePatientsES(), 30000);
+        this.timer = setInterval(() => this.updatePatientsES(), 500000);
     }
 
     componentWillUnmount() {
@@ -123,7 +123,6 @@ class PatientDashboard extends Component {
     }
 
     displaySinglePatient(id) {
-        console.log("click", id)
         const patient = this.props.patients.find(patient => patient.devices[0].id == id)
         if (patient) {
             this.props.loadInfo(patient);
@@ -165,11 +164,17 @@ class PatientDashboard extends Component {
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
 
-        if (!this.props.rooms || !this.props.patients_es) {
+        if (!this.props.rooms || !this.props.patients_es || !this.props.patients) {
             return <div></div>
         }
 
-        this.props.patients_es.map(patient => patient.inRoom = false)
+        this.props.patients_es.map(patient_es => {
+            patient_es.inRoom = false
+            const patient = this.props.patients.find(patient => patient.devices[0].id == patient_es.id)
+            patient_es.bed = patient? parseInt(patient.bed.id) : 0
+        })
+
+        this.props.patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
 
         return (
             <div className={classes.root}>
