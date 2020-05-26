@@ -23,13 +23,6 @@ const styles2 = {
     inactive: {
         backgroundColor: "#777777",
     },
-    circle: {
-        width: 50,
-        height: 50,
-        borderRadius: 50,
-        textAlign: 'center',
-        background: "#ffffff",
-    },
 };
 
 
@@ -38,16 +31,24 @@ class PatientReading extends React.Component {
 
     render() {
         const {classes} = this.props
-
         const tLatest = moment(this.props.patient.timestamp)
         const tCur = moment()
+
+        let spo2_state = 0
+        let hr_state = 0
+        if (this.props.patient["heart_rate"] < 121 && this.props.patient["heart_rate"] > 69) {
+            hr_state = 1
+        }
+        if (this.props.patient["spo2"] > 94 && this.props.patient["spo2"] < 100) {
+            spo2_state = 1
+        }
 
         let status
         if (!tLatest.isSame(tCur, 'day')){
             status = classes.inactive
-        } else if (this.props.patient["heart_rate"] < 120 && this.props.patient["heart_rate"] > 70 && this.props.patient["spo2"] > 95) {
+        } else if (hr_state & spo2_state ){
             status = classes.normal
-        } else if (this.props.patient["heart_rate"] < 120 || this.props.patient["heart_rate"] > 70 || this.props.patient["spo2"] > 95) {
+        } else if (hr_state ^ spo2_state) {
             status = classes.warning
         } else {
             status = classes.error
