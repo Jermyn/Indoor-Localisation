@@ -3,6 +3,7 @@ import Card from '@material-ui/core/Card';
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
 import {withStyles} from "@material-ui/core/styles";
+import moment from "moment";
 
 const styles2 = {
     card: {
@@ -38,12 +39,11 @@ class PatientReading extends React.Component {
     render() {
         const {classes} = this.props
 
-        const tLatest = Date.parse(this.props.patient.timestamp)
-        const tCur = Date.now()
+        const tLatest = moment(this.props.patient.timestamp)
+        const tCur = moment()
 
         let status
-        // 3hrs = 10800000
-        if (tCur - tLatest > 10800000) {
+        if (!tLatest.isSame(tCur, 'day')){
             status = classes.inactive
         } else if (this.props.patient["heart_rate"] < 120 && this.props.patient["heart_rate"] > 70 && this.props.patient["spo2"] > 95) {
             status = classes.normal

@@ -20,6 +20,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import PlaybackChart from './PlaybackChart'
 
 import {addUsername} from "../../actions/index";
+import Grid from "@material-ui/core/Grid";
 
 const styles = theme => ({
     container: {
@@ -153,10 +154,8 @@ class PlaybackMode extends Component {
             beacon: this.props.beacon,
             devices: [],
             loading: false,
-            success: false,
             error: "",
             errorButton: "",
-            expanded: false,
         };
     }
 
@@ -167,7 +166,7 @@ class PlaybackMode extends Component {
                     return x.id
                 })
             }, () => {
-                this.submitForm()
+                this.fetchData()
             });
         }
     }
@@ -253,18 +252,15 @@ class PlaybackMode extends Component {
                 'scroll_id': scroll_id
             }
             let scroll_size = res.data.hits.hits.length
-            console.log(fullShot)
+            console.log('fullshot', fullShot)
             if (scroll_size > 0) {
                 this.getAPI(scrollQuery, fullShot, index, devices)
             } else {
                 if (fullShot.length > 0) {
                     this.setState({[index]: fullShot})
-                    this.setState({success: true})
                     this.setState({loading: false})
-                    this.setState({expanded: true})
                 } else {
                     this.setState({loading: false})
-                    this.setState({errorButton: "There is no data for " + `${devices}` + ". Please change patient or device."})
                 }
             }
         })
@@ -274,25 +270,29 @@ class PlaybackMode extends Component {
         this.submitQuery('vital', this.state.devices);
     }
 
-    fetchAllData = () => {
+    fetchData = () => {
+
+        const time = this.state.showAll ? moment(0).format("YYYY-MM-DDThh:mm") : moment(Date.now() - DURATION_1D*2).format("YYYY-MM-DDT00:00")
+
         this.setState({
-            startTime: moment(0).format("YYYY-MM-DDThh:mm")
+            startTime: time
         }, () => {
             this.submitForm()
         })
 
+        this.setState(prevState => ({
+            showAll: !prevState.showAll
+        }));
+
     }
 
-    renderPlaybackForm = (loading, success, errorButton) => {
+    renderPlaybackForm = () => {
         const {classes} = this.props;
-        const buttonClassname = classNames({
-            [classes.button]: success,
-            [classes.buttonError]: errorButton
-        });
+
         let form = <div>
             <form className={classes.container} noValidate>
-                <Button variant="contained" color="primary" onClick={this.fetchAllData} className={buttonClassname}>
-                    Get All Days
+                <Button variant="contained" color="primary" onClick={this.fetchData}>
+                    {this.state.showAll ? "Show All Days" : "Show 3 Days"}
                 </Button>
             </form>
         </div>
@@ -300,14 +300,14 @@ class PlaybackMode extends Component {
         return form
     }
 
+
     render() {
         const {classes} = this.props;
-        const {loading, success, errorButton, expanded} = this.state;
         return (
             <div className={classes.root}>
-                {this.renderPlaybackForm(loading, success, errorButton)}
+                {this.renderPlaybackForm()}
                 <div><Typography variant="subtitle1" style={{color: 'red'}}> {this.state.error}  </Typography></div>
-                <ExpansionPanel expanded={expanded}>
+                <ExpansionPanel defaultExpanded={true}>
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
                         <Typography variant="subtitle1" gutterBottom>Heart Rate</Typography>
                     </ExpansionPanelSummary>
@@ -319,7 +319,7 @@ class PlaybackMode extends Component {
                         </div>
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
-                <ExpansionPanel expanded={expanded}>
+                <ExpansionPanel defaultExpanded={true}>
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
                         <Typography variant="subtitle1" gutterBottom>SPO2</Typography>
                     </ExpansionPanelSummary>
