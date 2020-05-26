@@ -58,13 +58,13 @@ class PatientReading extends React.Component {
             <Card className={`${classes.card} ${status}`}>
                 <CardContent>
                     <Typography gutterBottom variant="h5" component="h2" color={'inherit'}>
-                        <strong>{this.props.patient["id"]}</strong>
+                        <strong>Bed {this.props.patient.bed}</strong>
                     </Typography>
                     <Typography gutterBottom variant="h6" component="p" color={'inherit'}>
-                        HR: <strong>{this.props.patient["heart_rate"]}</strong>
+                        HR: <strong>{this.props.patient.heart_rate}</strong>
                     </Typography>
                     <Typography variant="h6" component="p" color={'inherit'}>
-                        SpO2: <strong>{this.props.patient["spo2"]}</strong>
+                        SpO2: <strong>{this.props.patient.spo2}</strong>
                     </Typography>
                 </CardContent>
             </Card>
