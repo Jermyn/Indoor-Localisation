@@ -31,10 +31,11 @@ class PlaybackChart extends React.Component {
         chartData: {
             name: "traffic",
             columns: ["time", "value"],
-            points: null
+            points: []
         },
         timerange: "",
         emptyrange: [],
+        tickCount: 0,
         tracker: null,
         trackerValue: "--",
         trackerEvent: null,
@@ -138,32 +139,35 @@ class PlaybackChart extends React.Component {
             const emptyrange = []
             let start = this.props.start
             let end = this.props.end
-            let epoch = this.props.start.valueOf()
+            let t0 = this.props.start.valueOf()
             let timerange
 
-            if (epoch === 0) {
-                epoch = new Date(this.props.vitals[0]._source["@timestamp"]).setHours(0, 0, 0, 0)
-                start = moment(epoch)
+            if (t0 === 0 && this.props.vitals && this.props.vitals[0]) {
+                t0 = new Date(this.props.vitals[0]._source["@timestamp"]).setHours(0, 0, 0, 0)
+                start = moment(t0)
+                end = moment(new Date(this.props.vitals[this.props.vitals.length -1]._source["@timestamp"]).setHours(0, 0, 0, 0) + DURATION_1D)
             }
 
-            if (end - start > DURATION_1D * 30) {
-                timerange = new TimeRange([start, end + DURATION_6H]);
-            } else {
-                timerange = new TimeRange([start, end + DURATION_6H]);
+            timerange = new TimeRange([start, end + DURATION_6H]);
 
-                //maximum 30 days
+            if (end - start < DURATION_1D * 30) {
                 Array.from(Array(30)).forEach((x, i) => {
-                    emptyrange.push(new TimeRange(epoch + i * DURATION_1D, epoch + i * DURATION_1D + DURATION_6H))
+                    emptyrange.push(new TimeRange(t0 + i * DURATION_1D, t0 + i * DURATION_1D + DURATION_6H))
                 });
             }
 
+            const tickCount = (timerange.duration() < DURATION_1D * 15) ?
+                Math.floor((timerange.duration()) / DURATION_6H):
+                Math.min(Math.ceil((timerange.duration()) / DURATION_1D), 30)
+
             this.setState({timerange})
             this.setState({emptyrange})
+            this.setState({tickCount})
         }
     }
 
     render() {
-        if (!this.state.chartData.points || !this.state.chartData || !this.state.timerange) {
+        if (!this.state.timerange) {
             return <div></div>
         }
         const timeseries = new TimeSeries(this.state.chartData);
@@ -181,45 +185,36 @@ class PlaybackChart extends React.Component {
             },
         };
 
-        const tickCount = (timerange.duration() < DURATION_1D * 15) ?
-            Math.ceil((timerange.duration()) / DURATION_6H) :
-            Math.min(Math.ceil((timerange.duration()) / DURATION_1D), 30)
-
-        if (this.state.chartData.points) {
-            return (
-                <div>
-                    <Resizable>
-                        <ChartContainer
-                            showGrid={true}
-                            timeRange={timerange} width={800}
-                            timeAxisTickCount={tickCount}
-                        >
-                            <ChartRow height="400">
-                                <YAxis id="y"
-                                       label={this.props.data_type == 'heartrate' ? 'Heart Rate (bpm)' : 'Oxygen Saturation (%)'}
-                                    // min={0}
-                                    // max={this.props.data_type == 'heartrate' ? 200 : 100}
-                                       min={this.props.data_type == 'heartrate' ? timeseries.min() - 20 : timeseries.min() - 10}
-                                       max={this.props.data_type == 'heartrate' ? timeseries.max() + 20 : 100}
-                                       width="60" type="linear"/>
-
-                                <Charts>
-                                    <Baseline axis="y" label="Lower" position="right"
-                                              value={this.props.data_type == 'heartrate' ? 70 : 95}/>
-                                    <Baseline axis="y" label="Upper" position="right"
-                                              value={this.props.data_type == 'heartrate' ? 120 : 200}/>
-                                    <MultiBrush timeRanges={this.state.emptyrange}/>
-                                    <LineChart axis="y" series={timeseries} style={style}/>
-                                    <ScatterChart axis="y" series={timeseries} style={stylePoint}/>
-                                </Charts>
-                            </ChartRow>
-                        </ChartContainer>
-                    </Resizable>
-                </div>
-            );
-        } else {
-            return null
-        }
+        return (
+            <div>
+                <Resizable>
+                    <ChartContainer
+                        showGrid={true}
+                        timeRange={timerange} width={800}
+                        timeAxisTickCount={this.state.tickCount}
+                    >
+                        <ChartRow height="400">
+                            <YAxis id="y"
+                                   label={this.props.data_type == 'heartrate' ? 'Heart Rate (bpm)' : 'Oxygen Saturation (%)'}
+                                   min={60}
+                                   max={this.props.data_type == 'heartrate' ? 160 : 101}
+                                // min={this.props.data_type == 'heartrate' ? timeseries.min() - 20 : timeseries.min() - 10}
+                                // max={this.props.data_type == 'heartrate' ? timeseries.max() + 20 : 100}
+                                   width="60" type="linear"/>
+                            <Charts>
+                                <Baseline axis="y" label="Lower" position="right"
+                                          value={this.props.data_type == 'heartrate' ? 70 : 95}/>
+                                <Baseline axis="y" label="Upper" position="right"
+                                          value={this.props.data_type == 'heartrate' ? 120 : 200}/>
+                                <MultiBrush timeRanges={this.state.emptyrange}/>
+                                <LineChart axis="y" series={timeseries} style={style}/>
+                                <ScatterChart axis="y" series={timeseries} style={stylePoint}/>
+                            </Charts>
+                        </ChartRow>
+                    </ChartContainer>
+                </Resizable>
+            </div>
+        );
 
     }
 }

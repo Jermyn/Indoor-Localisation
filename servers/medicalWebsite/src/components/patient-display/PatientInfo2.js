@@ -30,6 +30,7 @@ import {
 } from "../../actions/index";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
+import Button from "@material-ui/core/Button";
 
 
 const styles = theme => ({
@@ -251,6 +252,11 @@ class PatientInfo2 extends Component {
         this.props.signOutUser()
     }
 
+    goBack = (e) => {
+        e.preventDefault();
+        this.props.history.push('/dashboard');
+    }
+
     render() {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
@@ -259,7 +265,6 @@ class PatientInfo2 extends Component {
         if (!this.props.info) {
             return <div></div>
         }
-
         return (
             <div className={classes.root}>
                 <AppBar position="static" style={{boxShadow: "none", backgroundColor: "white"}}>
@@ -313,14 +318,21 @@ class PatientInfo2 extends Component {
                                         <Typography variant="h6" gutterBottom>Name: {this.props.info.name}</Typography>
                                     </Grid>
                                     <Grid item xs={3}>
-                                        <Typography variant="h6" gutterBottom>Bed: {this.props.info.bed.id}</Typography>
+                                        <Typography variant="h6" gutterBottom>{this.props.info.room.name}</Typography>
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                        <Typography variant="h6" gutterBottom>Bed {this.props.info.bed.id}</Typography>
                                     </Grid>
                                     <Grid item xs={12}> <ConnectedPlaybackMode/> </Grid>
                                 </Grid>
                             </CardContent>
                         </Card>
+                        <Button size="small" onClick={this.goBack} variant="contained" color="primary" style={{margin: '2em'}}>
+                            Back
+                        </Button>
                     </Grid>
                 </Grid>
+
             </div>
         )
     }
