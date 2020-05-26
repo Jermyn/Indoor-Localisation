@@ -100,7 +100,7 @@ class PatientDashboard extends Component {
         this.props.fetchRooms()
         this.props.readPatients()
         this.updatePatientsES()
-        this.timer = setInterval(() => this.updatePatientsES(), 500000);
+        this.timer = setInterval(() => this.updatePatientsES(), 3000);
     }
 
     componentWillUnmount() {
