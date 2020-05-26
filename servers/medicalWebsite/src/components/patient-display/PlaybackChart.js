@@ -191,7 +191,7 @@ class PlaybackChart extends React.Component {
                     <ChartContainer
                         showGrid={true}
                         timeRange={timerange} width={800}
-                        timeAxisTickCount={this.state.tickCount}
+                        {/*timeAxisTickCount={this.state.tickCount}*/}
                     >
                         <ChartRow height="400">
                             <YAxis id="y"
