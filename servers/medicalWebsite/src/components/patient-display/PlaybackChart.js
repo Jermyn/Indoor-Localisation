@@ -191,7 +191,7 @@ class PlaybackChart extends React.Component {
                     <ChartContainer
                         showGrid={true}
                         timeRange={timerange} width={800}
-                        timeAxisTickCount={this.state.tickCount}
+                        // timeAxisTickCount={this.state.tickCount}
                     >
                         <ChartRow height="400">
                             <YAxis id="y"
@@ -203,7 +203,7 @@ class PlaybackChart extends React.Component {
                                    width="60" type="linear"/>
                             <Charts>
                                 <Baseline axis="y" label="Lower" position="right"
-                                          value={this.props.data_type == 'heartrate' ? 70 : 95}/>
+                                          value={this.props.data_type == 'heartrate' ? 0 : 95}/>
                                 <Baseline axis="y" label="Upper" position="right"
                                           value={this.props.data_type == 'heartrate' ? 120 : 200}/>
                                 <MultiBrush timeRanges={this.state.emptyrange}/>

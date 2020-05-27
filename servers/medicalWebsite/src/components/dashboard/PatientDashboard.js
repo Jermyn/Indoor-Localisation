@@ -241,19 +241,19 @@ class PatientDashboard extends Component {
                             )}
                         </Grid>
                     ))}
-                    <Grid container className={classes.gridContainerRoom}>
-                        <Grid item xs={12}>
-                            <Typography gutterBottom variant="h5" onClick={() => { console.log('click')}}>
-                                <strong>Unallocated</strong>
-                            </Typography>
-                        </Grid>
-                        {this.props.patients_es.filter(p => p.inRoom === false).map((patient) => (
-                            <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
-                                  key={patient["id"]}>
-                                <PatientReading patient={patient}/>
-                            </Grid>
-                        ))}
-                    </Grid>
+                    {/*<Grid container className={classes.gridContainerRoom}>*/}
+                    {/*    <Grid item xs={12}>*/}
+                    {/*        <Typography gutterBottom variant="h5" onClick={() => { console.log('click')}}>*/}
+                    {/*            <strong>Unallocated</strong>*/}
+                    {/*        </Typography>*/}
+                    {/*    </Grid>*/}
+                    {/*    {this.props.patients_es.filter(p => p.inRoom === false).map((patient) => (*/}
+                    {/*        <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}*/}
+                    {/*              key={patient["id"]}>*/}
+                    {/*            <PatientReading patient={patient}/>*/}
+                    {/*        </Grid>*/}
+                    {/*    ))}*/}
+                    {/*</Grid>*/}
                 </Grid>
             </div>
         );
