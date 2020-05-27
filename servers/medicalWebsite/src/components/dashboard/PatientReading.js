@@ -5,6 +5,7 @@ import Typography from "@material-ui/core/Typography";
 import {withStyles} from "@material-ui/core/styles";
 import moment from "moment";
 
+
 const styles2 = {
     card: {
         maxWidth: 150,
@@ -34,9 +35,14 @@ class PatientReading extends React.Component {
         const tLatest = moment(this.props.patient.timestamp)
         const tCur = moment()
 
+        // 6 am, 11 am, 5 pm, and 9 pm
+        const checkpoints = [6, 11, 17, 21]
+        const checkpoint1 = Math.max.apply(Math, checkpoints.filter(x => x <= tLatest.hours()))
+        const checkpoint2 = Math.max.apply(Math, checkpoints.filter(x => x <= tCur.hours()))
+
         let spo2_state = 0
         let hr_state = 0
-        if (this.props.patient["heart_rate"] < 121 && this.props.patient["heart_rate"] > 69) {
+        if (this.props.patient["heart_rate"] < 121) {
             hr_state = 1
         }
         if (this.props.patient["spo2"] > 94 && this.props.patient["spo2"] < 100) {
@@ -44,9 +50,9 @@ class PatientReading extends React.Component {
         }
 
         let status
-        if (!tLatest.isSame(tCur, 'day')){
+        if (!(tLatest.isSame(tCur, 'day') && checkpoint1 === checkpoint2)) {
             status = classes.inactive
-        } else if (hr_state & spo2_state ){
+        } else if (hr_state & spo2_state) {
             status = classes.normal
         } else if (hr_state ^ spo2_state) {
             status = classes.warning
