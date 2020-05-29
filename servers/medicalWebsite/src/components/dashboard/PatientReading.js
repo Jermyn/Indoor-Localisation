@@ -42,7 +42,7 @@ class PatientReading extends React.Component {
 
         let spo2_state = 0
         let hr_state = 0
-        if (this.props.patient["heart_rate"] <= 90) {
+        if (this.props.patient["heart_rate"] > 90) {
             hr_state = 1
         }
         if (this.props.patient["spo2"] > 94 && this.props.patient["spo2"] < 100) {
