@@ -205,7 +205,7 @@ class PlaybackChart extends React.Component {
                                 <Baseline axis="y" label="Lower" position="right"
                                           value={this.props.data_type == 'heartrate' ? 0 : 95}/>
                                 <Baseline axis="y" label="Upper" position="right"
-                                          value={this.props.data_type == 'heartrate' ? 120 : 200}/>
+                                          value={this.props.data_type == 'heartrate' ? 90 : 200}/>
                                 <MultiBrush timeRanges={this.state.emptyrange}/>
                                 <LineChart axis="y" series={timeseries} style={style}/>
                                 <ScatterChart axis="y" series={timeseries} style={stylePoint}/>
