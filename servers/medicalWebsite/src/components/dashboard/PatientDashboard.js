@@ -218,9 +218,9 @@ class PatientDashboard extends Component {
                         )}
                     </Toolbar>
                 </AppBar>
-                <ClickAwayListener onClickAway={this.toggleCloseDrawer}>
+                {/*<ClickAwayListener onClickAway={this.toggleCloseDrawer}>
                     <TemporaryDrawer toggle={this.state.drawer}/>
-                </ClickAwayListener>
+                </ClickAwayListener>*/}
                 <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='center'>
                     {this.props.rooms && this.props.rooms.map((room) => (
                         <Grid container className={classes.gridContainerRoom} key={room.name}>

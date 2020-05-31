@@ -306,9 +306,9 @@ class PatientInfo2 extends Component {
                         )}
                     </Toolbar>
                 </AppBar>
-                <ClickAwayListener onClickAway={this.toggleCloseDrawer}>
+                {/*<ClickAwayListener onClickAway={this.toggleCloseDrawer}>
                     <TemporaryDrawer toggle={this.state.drawer}/>
-                </ClickAwayListener>
+                </ClickAwayListener>*/}
                 <Grid container justify="center">
                     <Grid container className={classes.demo}>
                         <Card className={classes.card}>
