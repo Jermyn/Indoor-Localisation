@@ -1,4 +1,7 @@
 import React, {Component} from 'react';
+import {connect} from "react-redux";
+import moment from "moment";
+
 import Grid from '@material-ui/core/Grid';
 import AppBar from '@material-ui/core/AppBar';
 import {withStyles} from "@material-ui/core/styles";
@@ -9,9 +12,7 @@ import Typography from "@material-ui/core/Typography";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
-import ClickAwayListener from "@material-ui/core/ClickAwayListener";
-
-import TemporaryDrawer from '../../TemporaryDrawer.js';
+import StopIcon from '@material-ui/icons/Stop';
 
 import {
     signOutUser,
@@ -22,7 +23,6 @@ import {
     fetchDashboardPatients2,
     loadInfo
 } from "../../actions";
-import {connect} from "react-redux";
 import PatientReading from "./PatientReading";
 
 
@@ -48,16 +48,23 @@ const styles = {
     },
     gridContainerMain: {
         padding: 100,
+        paddingBottom: 40
     },
     gridContainerRoom: {
         padding: 20,
         border: '2px solid #000000',
+    },
+    gridItemLegend: {
+        padding: 20,
+        border: '2px solid #aaaaaa',
     },
     gridCard: {
         padding: 5
     }
 
 };
+
+const checkpoints = [6, 11, 17, 21]
 
 const mapStateToProps = state => {
     return {
@@ -95,12 +102,10 @@ class PatientDashboard extends Component {
     }
 
     componentDidMount() {
-        console.log("PatientDashboard mount")
-
         this.props.fetchRooms()
         this.props.readPatients()
         this.updatePatientsES()
-        this.timer = setInterval(() => this.updatePatientsES(), 3000);
+        this.timer = setInterval(() => this.updatePatientsES(), 30000);
     }
 
     componentWillUnmount() {
@@ -159,6 +164,15 @@ class PatientDashboard extends Component {
         this.props.signOutUser()
     }
 
+    getPeriod() {
+        const t = moment()
+        const periodStart = t.hours() > 6 ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : 21
+        const periodEnd = t.hours() < 21 ? Math.min.apply(Math, checkpoints.filter(x => x > t.hours())) : 6
+
+        return {periodStart: periodStart, periodEnd: periodEnd};
+    }
+
+
     render() {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
@@ -168,13 +182,16 @@ class PatientDashboard extends Component {
             return <div></div>
         }
 
-        this.props.patients_es.map(patient_es => {
+        let patients_es = this.props.patients_es
+        patients_es.map(patient_es => {
             patient_es.inRoom = false
             const patient = this.props.patients.find(patient => patient.devices[0].id == patient_es.id)
             patient_es.bed = patient? parseInt(patient.bed.id) : 0
+            patient_es.name = patient? patient.name : ''
         })
+        patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
 
-        this.props.patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
+        const {periodStart, periodEnd} = this.getPeriod();
 
         return (
             <div className={classes.root}>
@@ -218,10 +235,37 @@ class PatientDashboard extends Component {
                         )}
                     </Toolbar>
                 </AppBar>
-                <ClickAwayListener onClickAway={this.toggleCloseDrawer}>
-                    <TemporaryDrawer toggle={this.state.drawer}/>
-                </ClickAwayListener>
-                <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='center'>
+                <Grid container className={classes.gridContainerMain}  justify="flex-start" alignItems='flex-start'>
+                    <Grid item xs={4} >
+                        <Grid item>
+                            <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
+                                <strong>Current Period: </strong>
+                                {periodStart}:00 - {periodEnd}:00
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <Grid item></Grid>
+                    </Grid>
+                    <Grid item xs={4} >
+                        <Grid item className={classes.gridItemLegend}>
+                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                                <StopIcon style={{ color: '#777777' }}/> Inactive reading
+                            </Typography>
+                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                                <StopIcon style={{ color: '#43a047' }}/> Normal Heart Rate and SpO2
+                            </Typography>
+                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                                <StopIcon style={{ color: '#fb8c00' }}/> Abnormal Heart Rate or SpO2
+                            </Typography>
+                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                                <StopIcon style={{ color: '#e53935' }}/> Abnormal Heart Rate and SpO2
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                </Grid>
+
+                <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
                     {this.props.rooms && this.props.rooms.map((room) => (
                         <Grid container className={classes.gridContainerRoom} key={room.name}>
                             <Grid item xs={12}>
@@ -229,7 +273,7 @@ class PatientDashboard extends Component {
                                     <strong>{room.name}</strong>
                                 </Typography>
                             </Grid>
-                            {room.devices && this.props.patients_es.filter(p => room.devices.some(d => d.id === p.id)).map((patient) => {
+                            {room.devices && patients_es.filter(p => room.devices.some(d => d.id === p.id)).map((patient) => {
                                     patient.inRoom = true
                                     return (
                                         <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
@@ -247,7 +291,7 @@ class PatientDashboard extends Component {
                     {/*            <strong>Unallocated</strong>*/}
                     {/*        </Typography>*/}
                     {/*    </Grid>*/}
-                    {/*    {this.props.patients_es.filter(p => p.inRoom === false).map((patient) => (*/}
+                    {/*    {patients_es.filter(p => p.inRoom === false).map((patient) => (*/}
                     {/*        <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}*/}
                     {/*              key={patient["id"]}>*/}
                     {/*            <PatientReading patient={patient}/>*/}
@@ -258,6 +302,7 @@ class PatientDashboard extends Component {
             </div>
         );
     };
+
 }
 
 const ConnectedDashboard = connect(mapStateToProps, mapDispatchToProps)(PatientDashboard);

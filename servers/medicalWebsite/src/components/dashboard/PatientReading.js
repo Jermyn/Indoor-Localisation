@@ -1,9 +1,10 @@
 import React from 'react'
+import moment from "moment";
+
 import Card from '@material-ui/core/Card';
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
 import {withStyles} from "@material-ui/core/styles";
-import moment from "moment";
 
 
 const styles2 = {
@@ -64,7 +65,7 @@ class PatientReading extends React.Component {
             <Card className={`${classes.card} ${status}`}>
                 <CardContent>
                     <Typography gutterBottom variant="h5" component="h2" color={'inherit'}>
-                        <strong>Bed {this.props.patient.bed}</strong>
+                        <strong>{this.props.patient.name}</strong>
                     </Typography>
                     <Typography gutterBottom variant="h6" component="p" color={'inherit'}>
                         HR: <strong>{this.props.patient.heart_rate}</strong>
