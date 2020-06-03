@@ -20,7 +20,6 @@ import {
     fetchRooms,
     readPatients,
     fetchDashboardPatients,
-    fetchDashboardPatients2,
     loadInfo
 } from "../../actions";
 import PatientReading from "./PatientReading";
@@ -83,8 +82,7 @@ const mapDispatchToProps = dispatch => {
         verifyAuth: credentials => dispatch(verifyAuth(credentials)),
         fetchRooms: () => dispatch(fetchRooms()),
         readPatients: () => dispatch(readPatients()),
-        fetchDashboardPatients: () => dispatch(fetchDashboardPatients()),
-        fetchDashboardPatients2: () => dispatch(fetchDashboardPatients2()),
+        fetchDashboardPatients: (tStart, tEnd) => dispatch(fetchDashboardPatients(tStart, tEnd)),
         loadInfo: object => dispatch(loadInfo(object))
     };
 };
@@ -98,6 +96,10 @@ class PatientDashboard extends Component {
             auth: true,
             drawer: false,
             isAuthenticating: true,
+
+            curCp: 0,
+            prevCp: 0,
+            nextCp: 0
         };
     }
 
@@ -105,7 +107,7 @@ class PatientDashboard extends Component {
         this.props.fetchRooms()
         this.props.readPatients()
         this.updatePatientsES()
-        this.timer = setInterval(() => this.updatePatientsES(), 30000);
+        this.timer = setInterval(() => this.updatePatientsES(), 5000);
     }
 
     componentWillUnmount() {
@@ -123,8 +125,20 @@ class PatientDashboard extends Component {
     }
 
     updatePatientsES() {
-        this.props.fetchDashboardPatients();
-        // this.props.fetchDashboardPatients2();
+        const t = moment()
+        const curCp = t.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
+        const prevCp = checkpoints[(checkpoints.indexOf(curCp) - 1) % checkpoints.length]
+        const nextCp = checkpoints[(checkpoints.indexOf(curCp) + 1) % checkpoints.length]
+
+        let tStart = moment().set({hour: prevCp, minute: 0, second: 0, millisecond: 0})
+        let tEnd = moment().set({hour: curCp, minute: 0, second: 0, millisecond: 0})
+
+        if (prevCp === checkpoints.slice(-1)[0]) {
+            tStart = tStart.subtract(1, 'days')
+        }
+        this.setState({curCp, prevCp, nextCp})
+
+        this.props.fetchDashboardPatients(tStart, tEnd);
     }
 
     displaySinglePatient(id) {
@@ -164,15 +178,6 @@ class PatientDashboard extends Component {
         this.props.signOutUser()
     }
 
-    getPeriod() {
-        const t = moment()
-        const periodStart = t.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints[3]
-        const periodEnd = t.hours() < checkpoints[3] ? Math.min.apply(Math, checkpoints.filter(x => x > t.hours())) : checkpoints[0]
-
-        return {periodStart: periodStart, periodEnd: periodEnd};
-    }
-
-
     render() {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
@@ -186,12 +191,10 @@ class PatientDashboard extends Component {
         patients_es.map(patient_es => {
             patient_es.inRoom = false
             const patient = this.props.patients.find(patient => patient.devices[0].uuid == patient_es.id)
-            patient_es.bed = patient? parseInt(patient.bed.id) : 0
-            patient_es.name = patient? patient.name : ''
+            patient_es.bed = patient ? parseInt(patient.bed.id) : 0
+            patient_es.name = patient ? patient.name : ''
         })
         patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
-
-        const {periodStart, periodEnd} = this.getPeriod();
 
         return (
             <div className={classes.root}>
@@ -235,31 +238,31 @@ class PatientDashboard extends Component {
                         )}
                     </Toolbar>
                 </AppBar>
-                <Grid container className={classes.gridContainerMain}  justify="flex-start" alignItems='flex-start'>
-                    <Grid item xs={4} >
+                <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
+                    <Grid item xs={4}>
                         <Grid item>
                             <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
                                 <strong>Current Period: </strong>
-                                {periodStart}:00 - {periodEnd}:00
+                                {this.state.curCp}:00 - {this.state.nextCp}:00
                             </Typography>
                         </Grid>
                     </Grid>
                     <Grid item xs={4}>
                         <Grid item></Grid>
                     </Grid>
-                    <Grid item xs={4} >
+                    <Grid item xs={4}>
                         <Grid item className={classes.gridItemLegend}>
                             <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{ color: '#777777' }}/> Inactive reading
+                                <StopIcon style={{color: '#777777'}}/> Inactive reading
                             </Typography>
                             <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{ color: '#43a047' }}/> Normal Heart Rate and SpO2
+                                <StopIcon style={{color: '#43a047'}}/> Normal Heart Rate and SpO2
                             </Typography>
                             <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{ color: '#fb8c00' }}/> Abnormal Heart Rate or SpO2
+                                <StopIcon style={{color: '#fb8c00'}}/> Abnormal Heart Rate or SpO2
                             </Typography>
                             <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{ color: '#e53935' }}/> Abnormal Heart Rate and SpO2
+                                <StopIcon style={{color: '#e53935'}}/> Abnormal Heart Rate and SpO2
                             </Typography>
                         </Grid>
                     </Grid>
@@ -269,7 +272,9 @@ class PatientDashboard extends Component {
                     {this.props.rooms && this.props.rooms.map((room) => (
                         <Grid container className={classes.gridContainerRoom} key={room.name}>
                             <Grid item xs={12}>
-                                <Typography gutterBottom variant="h5" onClick={() => {console.log('click room')}}>
+                                <Typography gutterBottom variant="h5" onClick={() => {
+                                    console.log('click room')
+                                }}>
                                     <strong>{room.name}</strong>
                                 </Typography>
                             </Grid>
@@ -278,7 +283,8 @@ class PatientDashboard extends Component {
                                     return (
                                         <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
                                               key={patient["id"]} onClick={() => this.displaySinglePatient(patient["id"])}>
-                                            <PatientReading patient={patient} checkpoints={checkpoints}/>
+                                            <PatientReading patient={patient} checkpoints={checkpoints}
+                                                            curCp={this.state.curCp}/>
                                         </Grid>
                                     )
                                 }
