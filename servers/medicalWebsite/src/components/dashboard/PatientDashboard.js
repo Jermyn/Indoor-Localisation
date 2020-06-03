@@ -185,7 +185,7 @@ class PatientDashboard extends Component {
         let patients_es = this.props.patients_es
         patients_es.map(patient_es => {
             patient_es.inRoom = false
-            const patient = this.props.patients.find(patient => patient.devices[0].id == patient_es.id)
+            const patient = this.props.patients.find(patient => patient.devices[0].uuid == patient_es.id)
             patient_es.bed = patient? parseInt(patient.bed.id) : 0
             patient_es.name = patient? patient.name : ''
         })
@@ -273,7 +273,7 @@ class PatientDashboard extends Component {
                                     <strong>{room.name}</strong>
                                 </Typography>
                             </Grid>
-                            {room.devices && patients_es.filter(p => room.devices.some(d => d.id === p.id)).map((patient) => {
+                            {room.devices && patients_es.filter(p => room.devices.some(d => d.uuid === p.id)).map((patient) => {
                                     patient.inRoom = true
                                     return (
                                         <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
