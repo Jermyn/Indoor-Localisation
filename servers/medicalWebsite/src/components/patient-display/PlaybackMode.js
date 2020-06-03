@@ -136,8 +136,6 @@ const mapDispatchToProps = dispatch => {
     };
 };
 
-const DURATION_1H = 3600000
-const DURATION_6H = 21600000
 const DURATION_1D = 86400000
 
 class PlaybackMode extends Component {
@@ -145,7 +143,7 @@ class PlaybackMode extends Component {
         super(props);
 
         this.state = {
-            startTime: moment(Date.now() - DURATION_1D*2).format("YYYY-MM-DDT00:00"),
+            startTime: moment(Date.now() - DURATION_1D * 2).format("YYYY-MM-DDT00:00"),
             endTime: moment(Date.now() + DURATION_1D).format("YYYY-MM-DDT00:00"),
             showAll: false,
             vital: [],
@@ -186,7 +184,6 @@ class PlaybackMode extends Component {
     handleChange = prop => event => {
         this.setState({[prop]: event.target.value});
     };
-
 
     submitQuery = (index, devices) => {
         let timeStart = this.state.startTime
@@ -272,7 +269,7 @@ class PlaybackMode extends Component {
 
     fetchData = () => {
 
-        const time = this.state.showAll ? moment(0).format("YYYY-MM-DDThh:mm") : moment(Date.now() - DURATION_1D*2).format("YYYY-MM-DDT00:00")
+        const time = this.state.showAll ? moment(0).format("YYYY-MM-DDThh:mm") : moment(Date.now() - DURATION_1D * 2).format("YYYY-MM-DDT00:00")
 
         this.setState({
             startTime: time
@@ -299,7 +296,6 @@ class PlaybackMode extends Component {
 
         return form
     }
-
 
     render() {
         const {classes} = this.props;
