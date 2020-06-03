@@ -66,7 +66,7 @@ class PatientReading extends React.Component {
             }
 
             const tLatest = moment(this.props.patient.timestamp)
-            if (tLatest.isAfter(this.state.tCur)) {
+            if (tLatest.isBefore(this.state.tCur)) {
                 status = this.props.classes.inactive
             } else if (hr_state & spo2_state) {
                 status = this.props.classes.normal
