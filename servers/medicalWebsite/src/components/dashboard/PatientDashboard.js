@@ -116,10 +116,10 @@ class PatientDashboard extends Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (this.props.username != prevProps.username) {
+        if (this.props.username !== prevProps.username) {
             this.setState({username: this.props.username})
         }
-        if (this.props.isAuthenticating == false && this.props.authenticated == false) {
+        if (this.props.isAuthenticating === false && this.props.authenticated === false) {
             this.props.history.push('/');
         }
     }
@@ -142,7 +142,7 @@ class PatientDashboard extends Component {
     }
 
     displaySinglePatient(id) {
-        const patient = this.props.patients.find(patient => patient.devices[0].id == id)
+        const patient = this.props.patients.find(patient => patient.devices[0].id === id)
         if (patient) {
             this.props.loadInfo(patient);
             console.log('1', patient)
@@ -187,10 +187,10 @@ class PatientDashboard extends Component {
             return <div></div>
         }
 
-        let patients_es = this.props.patients_es
+        let patients_es = this.props.patients_es.slice()
         patients_es.map(patient_es => {
             patient_es.inRoom = false
-            const patient = this.props.patients.find(patient => patient.devices[0].id == patient_es.id)
+            const patient = this.props.patients.find(patient => patient.devices[0].id === patient_es.id)
             patient_es.bed = patient ? parseInt(patient.bed.id) : 0
             patient_es.name = patient ? patient.name : ''
         })

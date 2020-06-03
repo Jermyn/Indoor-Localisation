@@ -62,6 +62,7 @@ import {
 
 import axios from 'axios'
 import template from "../database/template.json";
+import moment from "moment";
 
 var Promise, graphqlUrl, restUrl, _, request
 Promise = require('bluebird');
@@ -735,27 +736,25 @@ export const removeListenerSpecificHeartrateVitals = (uuid) => async dispatch =>
     heartrateRef.child(uuid).off()
 }
 
-export const fetchDashboardPatients = () => async dispatch => {
+export const fetchDashboardPatients = (tStart, tEnd) => async dispatch => {
     const query = {
         "size": 0,
         "aggs": {
-            "filter_1": {
+            "agg_id": {
                 "terms": {
                     "field": "gattid.keyword",
-                    "size": 500,
-                    "order": {
-                        "_term": "asc"
-                    }
+                    "size": 150
                 },
                 "aggs": {
-                    "filter_2": {
+                    "agg_latest": {
                         "top_hits": {
                             "_source": [
                                 "gattid",
                                 "@timestamp",
                                 "anchorId",
                                 "heart_rate",
-                                "spo2"
+                                "spo2",
+                                "_id"
                             ],
                             "size": 1,
                             "sort": [
@@ -765,6 +764,40 @@ export const fetchDashboardPatients = () => async dispatch => {
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "agg_time": {
+                        "date_range": {
+                            "field": "@timestamp",
+                            "format": "epoch_millis",
+                            "ranges": [
+                                {
+                                    "from": tStart.valueOf(),
+                                    "to": tEnd.valueOf()
+                                }
+                            ]
+                        },
+                        "aggs": {
+                            "agg_latest": {
+                                "top_hits": {
+                                    "_source": [
+                                        "gattid",
+                                        "@timestamp",
+                                        "anchorId",
+                                        "heart_rate",
+                                        "spo2",
+                                        "_id"
+                                    ],
+                                    "size": 1,
+                                    "sort": [
+                                        {
+                                            "@timestamp": {
+                                                "order": "desc"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         }
                     }
                 }
@@ -779,13 +812,15 @@ export const fetchDashboardPatients = () => async dispatch => {
         }
     })
         .then((res) => {
-            const buckets = res.data.aggregations.filter_1.buckets.map(bucket => (
+            const buckets = res.data.aggregations.agg_id.buckets.map(bucket => (
                 {
-                    id: bucket.filter_2.hits.hits[0]._source.gattid,
-                    timestamp : bucket.filter_2.hits.hits[0]._source["@timestamp"],
-                    achorId: bucket.filter_2.hits.hits[0]._source.anchorId ? bucket.filter_2.hits.hits[0]._source.anchorId : "",
-                    heart_rate: bucket.filter_2.hits.hits[0]._source.heart_rate,
-                    spo2: bucket.filter_2.hits.hits[0]._source.spo2
+                    id: bucket.agg_latest.hits.hits[0]._source.gattid,
+                    timestamp : bucket.agg_latest.hits.hits[0]._source["@timestamp"],
+                    achorId: bucket.agg_latest.hits.hits[0]._source.anchorId ? bucket.agg_latest.hits.hits[0]._source.anchorId : "",
+                    heart_rate: bucket.agg_latest.hits.hits[0]._source.heart_rate,
+                    heart_rate_prev: bucket.agg_time.buckets[0].agg_latest.hits.hits[0] ? bucket.agg_time.buckets[0].agg_latest.hits.hits[0]._source.heart_rate : null,
+                    spo2: bucket.agg_latest.hits.hits[0]._source.spo2,
+                    spo2_prev: bucket.agg_time.buckets[0].agg_latest.hits.hits[0] ? bucket.agg_time.buckets[0].agg_latest.hits.hits[0]._source.spo2 : null
                 }
             ))
 
