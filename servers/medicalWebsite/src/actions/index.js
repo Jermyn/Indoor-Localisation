@@ -242,7 +242,7 @@ export const fetchRooms = () => async dispatch => {
         .on('value', querySnapshot => {
             let rooms = []
             let snapshot = querySnapshot.val()
-            for (var id in snapshot) {
+            for (let id in snapshot) {
                 let item = snapshot[id]
                 item.id = id
                 rooms.push(item)

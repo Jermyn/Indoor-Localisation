@@ -161,7 +161,7 @@ class PlaybackMode extends Component {
         if (this.props.info != "") {
             this.setState({
                 devices: this.props.info.devices.map(function (x) {
-                    return x.id
+                    return x.uuid
                 })
             }, () => {
                 this.fetchData()

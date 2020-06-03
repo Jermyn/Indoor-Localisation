@@ -47,7 +47,7 @@ class PatientReading extends React.Component {
             let spo2_state = this.state.spo2_state
             let status
 
-            if (this.props.curCp && this.props.curCp !== prevProps.curCp) {
+            if (this.props.curCp && this.props.curCp !== tCur.hours()) {
                 tCur = moment().set({hour: this.props.curCp, minute: 0, second: 0, millisecond: 0})
                 if (moment().hours() < this.props.checkpoints[0]) {
                     tCur = tCur.subtract(1, 'days')
@@ -55,18 +55,14 @@ class PatientReading extends React.Component {
                 this.setState({tCur})
             }
 
-            if (this.props.patient && this.props.patient !== prevProps.patient) {
-                if (this.props.patient["heart_rate"] <= 90) {
-                    hr_state = 1
-                }
-                if (this.props.patient["spo2"] > 94 && this.props.patient["spo2"] < 100) {
-                    spo2_state = 1
-                }
+            if (this.props.patient) {
+                hr_state = this.props.patient["heart_rate"] <= 90 ? 1 : 0
+                spo2_state = (this.props.patient["spo2"] > 94 && this.props.patient["spo2"] < 100) ? 1 : 0
                 this.setState({hr_state, spo2_state})
             }
 
             const tLatest = moment(this.props.patient.timestamp)
-            if (tLatest.isBefore(this.state.tCur)) {
+            if (tLatest.isBefore(tCur)) {
                 status = this.props.classes.inactive
             } else if (hr_state & spo2_state) {
                 status = this.props.classes.normal
