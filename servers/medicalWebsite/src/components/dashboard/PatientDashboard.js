@@ -64,7 +64,7 @@ const styles = {
 
 };
 
-const checkpoints = [6, 11, 17, 21]
+const checkpoints = [8, 12, 16, 20]
 
 const mapStateToProps = state => {
     return {
@@ -166,8 +166,8 @@ class PatientDashboard extends Component {
 
     getPeriod() {
         const t = moment()
-        const periodStart = t.hours() > 6 ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : 21
-        const periodEnd = t.hours() < 21 ? Math.min.apply(Math, checkpoints.filter(x => x > t.hours())) : 6
+        const periodStart = t.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints[3]
+        const periodEnd = t.hours() < checkpoints[3] ? Math.min.apply(Math, checkpoints.filter(x => x > t.hours())) : checkpoints[0]
 
         return {periodStart: periodStart, periodEnd: periodEnd};
     }
@@ -278,7 +278,7 @@ class PatientDashboard extends Component {
                                     return (
                                         <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
                                               key={patient["id"]} onClick={() => this.displaySinglePatient(patient["id"])}>
-                                            <PatientReading patient={patient}/>
+                                            <PatientReading patient={patient} checkpoints={checkpoints}/>
                                         </Grid>
                                     )
                                 }

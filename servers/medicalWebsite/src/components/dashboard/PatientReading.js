@@ -33,13 +33,12 @@ class PatientReading extends React.Component {
 
     render() {
         const {classes} = this.props
+        const checkpoints = this.props.checkpoints
         const tLatest = moment(this.props.patient.timestamp)
         const tCur = moment()
 
-        // 6 am, 11 am, 5 pm, and 9 pm
-        const checkpoints = [6, 11, 17, 21]
-        const checkpoint1 = Math.max.apply(Math, checkpoints.filter(x => x <= tLatest.hours()))
-        const checkpoint2 = Math.max.apply(Math, checkpoints.filter(x => x <= tCur.hours()))
+        const checkpoint1 = tLatest.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= tLatest.hours())) : checkpoints[3]
+        const checkpoint2 = tCur.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= tCur.hours())) : checkpoints[3]
 
         let spo2_state = 0
         let hr_state = 0
