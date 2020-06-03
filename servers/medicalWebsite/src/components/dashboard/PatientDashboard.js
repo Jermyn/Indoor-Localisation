@@ -128,7 +128,7 @@ class PatientDashboard extends Component {
     }
 
     displaySinglePatient(id) {
-        const patient = this.props.patients.find(patient => patient.devices[0].id == id)
+        const patient = this.props.patients.find(patient => patient.devices[0].uuid == id)
         if (patient) {
             this.props.loadInfo(patient);
             console.log('1', patient)
