@@ -230,7 +230,7 @@ class PatientInfo2 extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.history.push('/home');
+        this.props.history.push('/dashboard');
     }
 
     handleLoading = () => {

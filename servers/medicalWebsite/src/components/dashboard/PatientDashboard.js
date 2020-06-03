@@ -116,10 +116,10 @@ class PatientDashboard extends Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (this.props.username != prevProps.username) {
+        if (this.props.username !== prevProps.username) {
             this.setState({username: this.props.username})
         }
-        if (this.props.isAuthenticating == false && this.props.authenticated == false) {
+        if (this.props.isAuthenticating === false && this.props.authenticated === false) {
             this.props.history.push('/');
         }
     }
@@ -142,7 +142,7 @@ class PatientDashboard extends Component {
     }
 
     displaySinglePatient(id) {
-        const patient = this.props.patients.find(patient => patient.devices[0].uuid == id)
+        const patient = this.props.patients.find(patient => patient.devices[0].uuid === id)
         if (patient) {
             this.props.loadInfo(patient);
             console.log('1', patient)
@@ -187,14 +187,16 @@ class PatientDashboard extends Component {
             return <div></div>
         }
 
-        let patients_es = this.props.patients_es
+        let patients_es = this.props.patients_es.slice()
         patients_es.map(patient_es => {
             patient_es.inRoom = false
-            const patient = this.props.patients.find(patient => patient.devices[0].uuid == patient_es.id)
+            const patient = this.props.patients.find(patient => patient.devices[0].uuid === patient_es.id)
             patient_es.bed = patient ? parseInt(patient.bed.id) : 0
             patient_es.name = patient ? patient.name : ''
         })
         patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
+
+        // console.log(1, this.props.rooms, patients_es)
 
         return (
             <div className={classes.root}>
@@ -282,7 +284,7 @@ class PatientDashboard extends Component {
                                     patient.inRoom = true
                                     return (
                                         <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
-                                              key={patient["id"]} onClick={() => this.displaySinglePatient(patient["id"])}>
+                                              key={patient.id} onClick={() => this.displaySinglePatient(patient.id)}>
                                             <PatientReading patient={patient} checkpoints={checkpoints}
                                                             curCp={this.state.curCp}/>
                                         </Grid>
@@ -299,8 +301,8 @@ class PatientDashboard extends Component {
                     {/*    </Grid>*/}
                     {/*    {patients_es.filter(p => p.inRoom === false).map((patient) => (*/}
                     {/*        <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}*/}
-                    {/*              key={patient["id"]}>*/}
-                    {/*            <PatientReading patient={patient}/>*/}
+                    {/*              key={patient.id}>*/}
+                    {/*            <PatientReading patient={patient} checkpoints={checkpoints} curCp={this.state.curCp}/>*/}
                     {/*        </Grid>*/}
                     {/*    ))}*/}
                     {/*</Grid>*/}
