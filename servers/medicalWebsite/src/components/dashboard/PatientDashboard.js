@@ -116,20 +116,29 @@ class PatientDashboard extends Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (this.props.username !== prevProps.username) {
+        if (this.props.username != prevProps.username) {
             this.setState({username: this.props.username})
         }
-        if (this.props.isAuthenticating === false && this.props.authenticated === false) {
+        if (this.props.isAuthenticating == false && this.props.authenticated == false) {
             this.props.history.push('/');
         }
     }
 
     updatePatientsES() {
         const t = moment()
-        const curCp = t.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
-        const prevCp = checkpoints[(checkpoints.indexOf(curCp) - 1) % checkpoints.length]
-        const nextCp = checkpoints[(checkpoints.indexOf(curCp) + 1) % checkpoints.length]
-
+        let curCp = null
+        if (t.hour() >= checkpoints[0] && t.hour() < checkpoints[1])
+            curCp = checkpoints[0]
+        else if (t.hour() >= checkpoints[1] && t.hour() < checkpoints[2])
+            curCp = checkpoints[1]
+        else if (t.hour() >= checkpoints[2] && t.hour() < checkpoints[3])
+            curCp = checkpoints[2]
+        else
+            curCp = checkpoints[3]
+        // const curCp = t.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
+        const prevCp = checkpoints.indexOf(curCp) > 0 ? checkpoints[(checkpoints.indexOf(curCp) - 1) % checkpoints.length] : checkpoints[(checkpoints.length-1) % checkpoints.length]
+        const nextCp = checkpoints.indexOf(curCp) < checkpoints.length - 1 ? checkpoints[(checkpoints.indexOf(curCp) + 1) % checkpoints.length] : checkpoints[0 % checkpoints.length]
+        // console.log (curCp, prevCp, nextCp)
         let tStart = moment().set({hour: prevCp, minute: 0, second: 0, millisecond: 0})
         let tEnd = moment().set({hour: curCp, minute: 0, second: 0, millisecond: 0})
 
@@ -142,7 +151,7 @@ class PatientDashboard extends Component {
     }
 
     displaySinglePatient(id) {
-        const patient = this.props.patients.find(patient => patient.devices[0].uuid === id)
+        const patient = this.props.patients.find(patient => patient.devices[0].uuid == id)
         if (patient) {
             this.props.loadInfo(patient);
             console.log('1', patient)
@@ -182,21 +191,20 @@ class PatientDashboard extends Component {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
+        console.log (this.state.curCp)
 
         if (!this.props.rooms || !this.props.patients_es || !this.props.patients) {
             return <div></div>
         }
 
-        let patients_es = this.props.patients_es.slice()
+        let patients_es = this.props.patients_es
         patients_es.map(patient_es => {
             patient_es.inRoom = false
-            const patient = this.props.patients.find(patient => patient.devices[0].uuid === patient_es.id)
+            const patient = this.props.patients.find(patient => patient.devices[0].uuid == patient_es.id)
             patient_es.bed = patient ? parseInt(patient.bed.id) : 0
             patient_es.name = patient ? patient.name : ''
         })
         patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
-
-        // console.log(1, this.props.rooms, patients_es)
 
         return (
             <div className={classes.root}>
@@ -284,7 +292,7 @@ class PatientDashboard extends Component {
                                     patient.inRoom = true
                                     return (
                                         <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
-                                              key={patient.id} onClick={() => this.displaySinglePatient(patient.id)}>
+                                              key={patient["id"]} onClick={() => this.displaySinglePatient(patient["id"])}>
                                             <PatientReading patient={patient} checkpoints={checkpoints}
                                                             curCp={this.state.curCp}/>
                                         </Grid>
@@ -301,8 +309,8 @@ class PatientDashboard extends Component {
                     {/*    </Grid>*/}
                     {/*    {patients_es.filter(p => p.inRoom === false).map((patient) => (*/}
                     {/*        <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}*/}
-                    {/*              key={patient.id}>*/}
-                    {/*            <PatientReading patient={patient} checkpoints={checkpoints} curCp={this.state.curCp}/>*/}
+                    {/*              key={patient["id"]}>*/}
+                    {/*            <PatientReading patient={patient}/>*/}
                     {/*        </Grid>*/}
                     {/*    ))}*/}
                     {/*</Grid>*/}
