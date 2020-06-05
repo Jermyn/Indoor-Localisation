@@ -34,6 +34,8 @@ class PatientReading extends React.Component {
         super();
         this.state = {
             status: null,
+            hr: 0,
+            spo2: 0,
             tCur: moment()
         };
     }
@@ -41,7 +43,6 @@ class PatientReading extends React.Component {
     componentDidUpdate(prevProps, prevState, snapshot) {
         if (this.props && prevProps !== this.props) {
             let tCur = this.state.tCur
-            let hr_state, spo2_state, status
             const hr = this.props.displayCur ? this.props.patient.heart_rate : this.props.patient.heart_rate_prev
             const spo2 = this.props.displayCur ? this.props.patient.spo2 : this.props.patient.spo2_prev
 
@@ -53,23 +54,25 @@ class PatientReading extends React.Component {
                 this.setState({tCur})
             }
 
-            if (hr || spo2) {
+            if (hr !== this.state.hr || spo2 !== this.state.spo2) {
+                let status, hr_state, spo2_state
+
                 hr_state = hr <= 90 ? 1 : 0
                 spo2_state = (spo2 > 94 && spo2 < 100) ? 1 : 0
+
+                if (!hr || !spo2) {
+                    status = this.props.classes.inactive
+                } else if (hr_state & spo2_state) {
+                    status = this.props.classes.normal
+                } else if (hr_state ^ spo2_state) {
+                    status = this.props.classes.warning
+                } else {
+                    status = this.props.classes.error
+                }
+                this.setState({hr, spo2, status})
             }
 
-            if (!hr || !spo2) {
-                status = this.props.classes.inactive
-            } else if (hr_state & spo2_state) {
-                status = this.props.classes.normal
-            } else if (hr_state ^ spo2_state) {
-                status = this.props.classes.warning
-            } else {
-                status = this.props.classes.error
-            }
-            this.setState({status})
         }
-
     }
 
     render() {
@@ -80,10 +83,10 @@ class PatientReading extends React.Component {
                         <strong>{this.props.patient.name}</strong>
                     </Typography>
                     <Typography gutterBottom variant="h6" component="p" color={'inherit'}>
-                        HR: <strong>{this.props.displayCur ?  this.props.patient.heart_rate : this.props.patient.heart_rate_prev}</strong>
+                        HR: <strong>{this.state.hr}</strong>
                     </Typography>
                     <Typography variant="h6" component="p" color={'inherit'}>
-                        SpO2: <strong>{this.props.displayCur ? this.props.patient.spo2 : this.props.patient.spo2_prev}</strong>
+                        SpO2: <strong>{this.state.spo2}</strong>
                     </Typography>
                 </CardContent>
             </Card>
