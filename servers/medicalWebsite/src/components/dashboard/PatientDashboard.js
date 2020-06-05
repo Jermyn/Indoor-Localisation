@@ -101,9 +101,10 @@ class PatientDashboard extends Component {
             drawer: false,
             isAuthenticating: true,
 
-            curCp: 0,
-            prevCp: 0,
-            nextCp: 0,
+            cpCur: 0,
+            tPrev: moment(),
+            tCur: moment(),
+            tNext: moment(),
 
             displayCur: true
         };
@@ -132,20 +133,29 @@ class PatientDashboard extends Component {
 
     updatePatientsES() {
         const t = moment()
-        const curCp = t.hours() >= checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
+        const cpCur = t.hours() >= checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
 
-        const prevCp = checkpoints[(checkpoints.indexOf(curCp) - 1) % checkpoints.length]
-        const nextCp = checkpoints[(checkpoints.indexOf(curCp) + 1) % checkpoints.length]
+        if (cpCur !== this.state.cpCur) {
+            const cpPrev = checkpoints[(checkpoints.indexOf(cpCur) - 1 + checkpoints.length) % checkpoints.length]
+            const cpNext = checkpoints[(checkpoints.indexOf(cpCur) + 1) % checkpoints.length]
 
-        let tStart = moment().set({hour: prevCp, minute: 0, second: 0, millisecond: 0})
-        let tEnd = moment().set({hour: curCp, minute: 0, second: 0, millisecond: 0})
+            let tPrev = moment().set({hour: cpPrev, minute: 0, second: 0, millisecond: 0})
+            let tCur = moment().set({hour: cpCur, minute: 0, second: 0, millisecond: 0})
+            let tNext = moment().set({hour: cpNext, minute: 0, second: 0, millisecond: 0})
 
-        if (prevCp === checkpoints.slice(-1)[0]) {
-            tStart = tStart.subtract(1, 'days')
+            if (cpPrev === checkpoints.slice(-1)[0]) {
+                tPrev = tPrev.subtract(1, 'days')
+            }
+            if (cpNext === checkpoints[0]) {
+                tNext = tNext.add(1, 'days')
+            }
+            this.setState({cpCur, tPrev, tCur, tNext})
+            this.props.fetchDashboardPatients(tPrev, tCur);
+
+        } else {
+            this.props.fetchDashboardPatients(this.state.tPrev, this.state.tCur);
         }
-        this.setState({curCp, prevCp, nextCp})
 
-        this.props.fetchDashboardPatients(tStart, tEnd);
     }
 
     displaySinglePatient(id) {
@@ -186,14 +196,100 @@ class PatientDashboard extends Component {
     }
 
     handlePeriodBtn = () => {
-        console.log('click btn')
         this.setState(prevState => ({displayCur: !prevState.displayCur}))
     }
 
-    render() {
+    renderAppBar() {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
+
+        return <AppBar position="static" style={{boxShadow: "none", backgroundColor: "white"}}
+                       className={classes.AppBar}>
+            <Toolbar>
+                <IconButton className={classes.menuButton} color="inherit" aria-label="Menu"
+                            onClick={this.toggleDrawer}>
+                    <MenuIcon/>
+                </IconButton>
+                <Typography variant="title" className={classes.grow} style={{color: "black"}}>
+                    Dashboard
+                </Typography>
+                {auth && (
+                    <div>
+                        <IconButton
+                            aria-owns={open ? 'menu-appbar' : null}
+                            aria-haspopup="true"
+                            onClick={this.handleMenu}
+                            color="inherit"
+                        >
+                            <AccountCircle style={{color: "black"}}/>
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            anchorEl={anchorEl}
+                            anchorOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            open={open}
+                            onClose={this.handleClose}
+                        >
+                            <MenuItem onClick={this.handleLogOut}>Logout</MenuItem>
+                        </Menu>
+                    </div>
+                )}
+            </Toolbar>
+        </AppBar>;
+    }
+
+    renderMiscGrid() {
+        const {classes} = this.props;
+
+        return <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
+            <Grid item xs={4}>
+                <Grid item>
+                    {this.state.displayCur ?
+                        <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
+                            <strong>Current Period: </strong>
+                            {this.state.tCur.format('DD/MM HH:mm')} - {this.state.tNext.format('DD/MM HH:mm')}
+                        </Typography>
+                        :
+                        <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
+                            <strong>Prev Period: </strong>
+                            {this.state.tPrev.format('DD/MM HH:mm')} - {this.state.tCur.format('DD/MM HH:mm')}
+                        </Typography>
+                    }
+                </Grid>
+                <Button variant="contained" size={"large"} color="primary" onClick={this.handlePeriodBtn}>
+                    {this.state.displayCur ? "<<" : ">>"}
+                </Button>
+            </Grid>
+            <Grid item xs={4}/>
+            <Grid item xs={4}>
+                <Grid item className={classes.gridItemLegend}>
+                    <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                        <StopIcon style={{color: '#777777'}}/> Inactive reading
+                    </Typography>
+                    <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                        <StopIcon style={{color: '#43a047'}}/> Normal Heart Rate and SpO2
+                    </Typography>
+                    <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                        <StopIcon style={{color: '#fb8c00'}}/> Abnormal Heart Rate or SpO2
+                    </Typography>
+                    <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                        <StopIcon style={{color: '#e53935'}}/> Abnormal Heart Rate and SpO2
+                    </Typography>
+                </Grid>
+            </Grid>
+        </Grid>;
+    }
+
+    renderMainGrid() {
+        const {classes} = this.props;
 
         if (!this.props.rooms || !this.props.patients_es || !this.props.patients) {
             return <div></div>
@@ -208,132 +304,43 @@ class PatientDashboard extends Component {
         })
         patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
 
+        return <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
+            {this.props.rooms && this.props.rooms.map((room) => (
+                <Grid container className={classes.gridContainerRoom} key={room.name}>
+                    <Grid item xs={12}>
+                        <Typography gutterBottom variant="h5" onClick={() => {
+                            console.log('click room')
+                        }}>
+                            <strong>{room.name}</strong>
+                        </Typography>
+                    </Grid>
+                    {room.devices && patients_es.filter(p => room.devices.some(d => d.uuid === p.id)).map((patient) => {
+                            patient.inRoom = true
+                            return (
+                                <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
+                                      key={patient.id} onClick={() => this.displaySinglePatient(patient.id)}>
+                                    <PatientReading patient={patient} checkpoints={checkpoints}
+                                                    curCp={this.state.curCp} displayCur={this.state.displayCur}/>
+                                </Grid>
+                            )
+                        }
+                    )}
+                </Grid>
+            ))}
+        </Grid>;
+    }
+
+    render() {
+        const {classes} = this.props;
+
         return (
             <div className={classes.root}>
-                <AppBar position="static" style={{boxShadow: "none", backgroundColor: "white"}}
-                        className={classes.AppBar}>
-                    <Toolbar>
-                        <IconButton className={classes.menuButton} color="inherit" aria-label="Menu"
-                                    onClick={this.toggleDrawer}>
-                            <MenuIcon/>
-                        </IconButton>
-                        <Typography variant="title" className={classes.grow} style={{color: "black"}}>
-                            Dashboard
-                        </Typography>
-                        {auth && (
-                            <div>
-                                <IconButton
-                                    aria-owns={open ? 'menu-appbar' : null}
-                                    aria-haspopup="true"
-                                    onClick={this.handleMenu}
-                                    color="inherit"
-                                >
-                                    <AccountCircle style={{color: "black"}}/>
-                                </IconButton>
-                                <Menu
-                                    id="menu-appbar"
-                                    anchorEl={anchorEl}
-                                    anchorOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'right',
-                                    }}
-                                    transformOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'right',
-                                    }}
-                                    open={open}
-                                    onClose={this.handleClose}
-                                >
-                                    <MenuItem onClick={this.handleLogOut}>Logout</MenuItem>
-                                </Menu>
-                            </div>
-                        )}
-                    </Toolbar>
-                </AppBar>
-
-
-                <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
-                    <Grid item xs={4}>
-                        <Grid item>
-                            {this.state.displayCur ?
-                                <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
-                                    <strong>Current Period: </strong>
-                                    {this.state.curCp}:00 - {this.state.nextCp}:00
-                                </Typography>
-                                :
-                                <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
-                                <strong>Prev Period: </strong>
-                                {this.state.prevCp}:00 - {this.state.curCp}:00
-                                </Typography>
-                            }
-                        </Grid>
-                        <Button variant="contained" size={"large"} color="primary" onClick={this.handlePeriodBtn}>
-                            {this.state.displayCur ? "<<" : ">>"}
-                        </Button>
-                    </Grid>
-                    <Grid item xs={4}>
-                        <Grid item></Grid>
-                    </Grid>
-                    <Grid item xs={4}>
-                        <Grid item className={classes.gridItemLegend}>
-                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{color: '#777777'}}/> Inactive reading
-                            </Typography>
-                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{color: '#43a047'}}/> Normal Heart Rate and SpO2
-                            </Typography>
-                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{color: '#fb8c00'}}/> Abnormal Heart Rate or SpO2
-                            </Typography>
-                            <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                                <StopIcon style={{color: '#e53935'}}/> Abnormal Heart Rate and SpO2
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </Grid>
-
-                <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
-                    {this.props.rooms && this.props.rooms.map((room) => (
-                        <Grid container className={classes.gridContainerRoom} key={room.name}>
-                            <Grid item xs={12}>
-                                <Typography gutterBottom variant="h5" onClick={() => {
-                                    console.log('click room')
-                                }}>
-                                    <strong>{room.name}</strong>
-                                </Typography>
-                            </Grid>
-                            {room.devices && patients_es.filter(p => room.devices.some(d => d.uuid === p.id)).map((patient) => {
-                                    patient.inRoom = true
-                                    return (
-                                        <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
-                                              key={patient.id} onClick={() => this.displaySinglePatient(patient.id)}>
-                                            <PatientReading patient={patient} checkpoints={checkpoints}
-                                                            curCp={this.state.curCp} displayCur={this.state.displayCur}/>
-                                        </Grid>
-                                    )
-                                }
-                            )}
-                        </Grid>
-                    ))}
-                    {/*<Grid container className={classes.gridContainerRoom}>*/}
-                    {/*    <Grid item xs={12}>*/}
-                    {/*        <Typography gutterBottom variant="h5" onClick={() => { console.log('click')}}>*/}
-                    {/*            <strong>Unallocated</strong>*/}
-                    {/*        </Typography>*/}
-                    {/*    </Grid>*/}
-                    {/*    {patients_es.filter(p => p.inRoom === false).map((patient) => (*/}
-                    {/*        <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}*/}
-                    {/*              key={patient.id}>*/}
-                    {/*            <PatientReading patient={patient} checkpoints={checkpoints} curCp={this.state.curCp}/>*/}
-                    {/*        </Grid>*/}
-                    {/*    ))}*/}
-                    {/*</Grid>*/}
-
-                </Grid>
+                {this.renderAppBar()}
+                {this.renderMiscGrid()}
+                {this.renderMainGrid()}
             </div>
         );
     };
-
 }
 
 const ConnectedDashboard = connect(mapStateToProps, mapDispatchToProps)(PatientDashboard);
