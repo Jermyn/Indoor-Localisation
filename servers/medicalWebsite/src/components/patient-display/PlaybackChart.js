@@ -22,7 +22,9 @@ const styles = theme => ({
 });
 
 const DURATION_1H = 3600000
+const DURATION_4H = 14400000
 const DURATION_6H = 21600000
+const DURATION_12H = 43200000
 const DURATION_1D = 86400000
 
 class PlaybackChart extends React.Component {
@@ -104,8 +106,8 @@ class PlaybackChart extends React.Component {
                 let epoch = new Date(vital._source["@timestamp"]).toLocaleString('en-GB');
                 let vitalSign = value
                 let time = new Date(vital._source["@timestamp"]).setMinutes(0, 0, 0)
-                // rounding to gmt+8, 6h mark, shift by 3
-                let time2 = Math.round((time + DURATION_1H * (8 + 3)) / DURATION_6H) * DURATION_6H - DURATION_1H * (8 + 3)
+                // flooring to gmt+8, 4h mark
+                let time2 = Math.floor((time + DURATION_1H * 8) / DURATION_4H) * DURATION_4H - DURATION_1H * 8
                 let point = [time2, value]
                 chartpoints.push(point)
                 labels.push(epoch)
@@ -152,7 +154,8 @@ class PlaybackChart extends React.Component {
 
             if (end - start < DURATION_1D * 30) {
                 Array.from(Array(30)).forEach((x, i) => {
-                    emptyrange.push(new TimeRange(t0 + i * DURATION_1D, t0 + i * DURATION_1D + DURATION_6H))
+                    // start from 4h prev day, end at +8h next day
+                    emptyrange.push(new TimeRange(t0 + i * DURATION_1D - DURATION_4H, t0 + i * DURATION_1D - DURATION_4H + DURATION_12H))
                 });
             }
 
@@ -160,9 +163,7 @@ class PlaybackChart extends React.Component {
                 Math.floor((timerange.duration()) / DURATION_6H):
                 Math.min(Math.ceil((timerange.duration()) / DURATION_1D), 30)
 
-            this.setState({timerange})
-            this.setState({emptyrange})
-            this.setState({tickCount})
+            this.setState({timerange, emptyrange, tickCount})
         }
     }
 
@@ -189,7 +190,7 @@ class PlaybackChart extends React.Component {
             <div>
                 <Resizable>
                     <ChartContainer
-                        showGrid={true}
+                        // showGrid={true}
                         timeRange={timerange} width={800}
                         // timeAxisTickCount={this.state.tickCount}
                     >
