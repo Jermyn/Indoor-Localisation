@@ -53,10 +53,9 @@ class PatientReading extends React.Component {
                 this.setState({tCur})
             }
 
-            if (hr || spo2) {
-                hr_state = hr <= 90 ? 1 : 0
-                spo2_state = (spo2 > 94 && spo2 < 100) ? 1 : 0
-                console.log(hr_state, hr, spo2_state, spo2)
+            if (this.props.patient) {
+                hr_state = this.props.patient.heart_rate <= 90 ? 1 : 0
+                spo2_state = (this.props.patient.spo2 > 94 && this.props.patient.spo2 < 100) ? 1 : 0
             }
 
             if (!hr || !spo2) {
