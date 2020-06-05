@@ -736,7 +736,7 @@ export const removeListenerSpecificHeartrateVitals = (uuid) => async dispatch =>
     heartrateRef.child(uuid).off()
 }
 
-export const fetchDashboardPatients = (tStart, tEnd) => async dispatch => {
+export const fetchDashboardPatients = (t1, t2) => async dispatch => {
     const query = {
         "size": 0,
         "aggs": {
@@ -751,10 +751,6 @@ export const fetchDashboardPatients = (tStart, tEnd) => async dispatch => {
                             "_source": [
                                 "gattid",
                                 "@timestamp",
-                                "anchorId",
-                                "heart_rate",
-                                "spo2",
-                                "_id"
                             ],
                             "size": 1,
                             "sort": [
@@ -766,14 +762,14 @@ export const fetchDashboardPatients = (tStart, tEnd) => async dispatch => {
                             ]
                         }
                     },
-                    "agg_time": {
+                    "agg_time_prev": {
                         "date_range": {
                             "field": "@timestamp",
                             "format": "epoch_millis",
                             "ranges": [
                                 {
-                                    "from": tStart.valueOf(),
-                                    "to": tEnd.valueOf()
+                                    "from": t1.valueOf(),
+                                    "to": t2.valueOf()
                                 }
                             ]
                         },
@@ -781,12 +777,39 @@ export const fetchDashboardPatients = (tStart, tEnd) => async dispatch => {
                             "agg_latest": {
                                 "top_hits": {
                                     "_source": [
-                                        "gattid",
                                         "@timestamp",
-                                        "anchorId",
                                         "heart_rate",
-                                        "spo2",
-                                        "_id"
+                                        "spo2"
+                                    ],
+                                    "size": 1,
+                                    "sort": [
+                                        {
+                                            "@timestamp": {
+                                                "order": "desc"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "agg_time_cur": {
+                        "date_range": {
+                            "field": "@timestamp",
+                            "format": "epoch_millis",
+                            "ranges": [
+                                {
+                                    "from": t2.valueOf()
+                                }
+                            ]
+                        },
+                        "aggs": {
+                            "agg_latest": {
+                                "top_hits": {
+                                    "_source": [
+                                        "@timestamp",
+                                        "heart_rate",
+                                        "spo2"
                                     ],
                                     "size": 1,
                                     "sort": [
@@ -812,17 +835,19 @@ export const fetchDashboardPatients = (tStart, tEnd) => async dispatch => {
         }
     })
         .then((res) => {
-            const buckets = res.data.aggregations.agg_id.buckets.map(bucket => (
-                {
-                    id: bucket.agg_latest.hits.hits[0]._source.gattid,
-                    timestamp : bucket.agg_latest.hits.hits[0]._source["@timestamp"],
-                    achorId: bucket.agg_latest.hits.hits[0]._source.anchorId ? bucket.agg_latest.hits.hits[0]._source.anchorId : "",
-                    heart_rate: bucket.agg_latest.hits.hits[0]._source.heart_rate,
-                    heart_rate_prev: bucket.agg_time.buckets[0].agg_latest.hits.hits[0] ? bucket.agg_time.buckets[0].agg_latest.hits.hits[0]._source.heart_rate : null,
-                    spo2: bucket.agg_latest.hits.hits[0]._source.spo2,
-                    spo2_prev: bucket.agg_time.buckets[0].agg_latest.hits.hits[0] ? bucket.agg_time.buckets[0].agg_latest.hits.hits[0]._source.spo2 : null
-                }
-            ))
+            const buckets = res.data.aggregations.agg_id.buckets.map(bucket => {
+                const cur = bucket.agg_time_cur.buckets[0].agg_latest.hits.hits[0]
+                const prev = bucket.agg_time_prev.buckets[0].agg_latest.hits.hits[0]
+                return (
+                    {
+                        id: bucket.agg_latest.hits.hits[0]._source.gattid,
+                        heart_rate: cur ? cur._source.heart_rate : null,
+                        heart_rate_prev: prev ? prev._source.heart_rate : null,
+                        spo2: cur ? cur._source.spo2 : null,
+                        spo2_prev: prev ? prev._source.spo2 : null
+                    }
+                )
+            })
 
             if (buckets.length > 0) {
                 dispatch({

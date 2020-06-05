@@ -23,6 +23,7 @@ import {
     loadInfo
 } from "../../actions";
 import PatientReading from "./PatientReading";
+import Button from "@material-ui/core/Button";
 
 
 const styles = {
@@ -59,6 +60,9 @@ const styles = {
     },
     gridCard: {
         padding: 5
+    },
+    gridContainerButton: {
+        padding: 50,
     }
 
 };
@@ -99,7 +103,9 @@ class PatientDashboard extends Component {
 
             curCp: 0,
             prevCp: 0,
-            nextCp: 0
+            nextCp: 0,
+
+            displayCur: true
         };
     }
 
@@ -126,7 +132,8 @@ class PatientDashboard extends Component {
 
     updatePatientsES() {
         const t = moment()
-        const curCp = t.hours() > checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
+        const curCp = t.hours() >= checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
+
         const prevCp = checkpoints[(checkpoints.indexOf(curCp) - 1) % checkpoints.length]
         const nextCp = checkpoints[(checkpoints.indexOf(curCp) + 1) % checkpoints.length]
 
@@ -178,6 +185,11 @@ class PatientDashboard extends Component {
         this.props.signOutUser()
     }
 
+    handlePeriodBtn = () => {
+        console.log('click btn')
+        this.setState(prevState => ({displayCur: !prevState.displayCur}))
+    }
+
     render() {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
@@ -195,8 +207,6 @@ class PatientDashboard extends Component {
             patient_es.name = patient ? patient.name : ''
         })
         patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
-
-        // console.log(1, this.props.rooms, patients_es)
 
         return (
             <div className={classes.root}>
@@ -240,14 +250,26 @@ class PatientDashboard extends Component {
                         )}
                     </Toolbar>
                 </AppBar>
+
+
                 <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
                     <Grid item xs={4}>
                         <Grid item>
-                            <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
-                                <strong>Current Period: </strong>
-                                {this.state.curCp}:00 - {this.state.nextCp}:00
-                            </Typography>
+                            {this.state.displayCur ?
+                                <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
+                                    <strong>Current Period: </strong>
+                                    {this.state.curCp}:00 - {this.state.nextCp}:00
+                                </Typography>
+                                :
+                                <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
+                                <strong>Prev Period: </strong>
+                                {this.state.prevCp}:00 - {this.state.curCp}:00
+                                </Typography>
+                            }
                         </Grid>
+                        <Button variant="contained" size={"large"} color="primary" onClick={this.handlePeriodBtn}>
+                            {this.state.displayCur ? "<<" : ">>"}
+                        </Button>
                     </Grid>
                     <Grid item xs={4}>
                         <Grid item></Grid>
@@ -286,7 +308,7 @@ class PatientDashboard extends Component {
                                         <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
                                               key={patient.id} onClick={() => this.displaySinglePatient(patient.id)}>
                                             <PatientReading patient={patient} checkpoints={checkpoints}
-                                                            curCp={this.state.curCp}/>
+                                                            curCp={this.state.curCp} displayCur={this.state.displayCur}/>
                                         </Grid>
                                     )
                                 }
@@ -306,6 +328,7 @@ class PatientDashboard extends Component {
                     {/*        </Grid>*/}
                     {/*    ))}*/}
                     {/*</Grid>*/}
+
                 </Grid>
             </div>
         );
