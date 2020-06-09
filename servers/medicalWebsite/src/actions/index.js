@@ -436,7 +436,7 @@ export const fetchSimulationCoordinates = () => async dispatch => {
         }
     })
         .then((res) => {
-            let fullTrace = res.data.hits.hits
+                let fullTrace = res.data.hits.hits
             if (fullTrace.length > 0) {
                 dispatch({
                     type: FETCH_SIMULATION_COORDINATES,
@@ -751,6 +751,8 @@ export const fetchDashboardPatients = (t1, t2) => async dispatch => {
                             "_source": [
                                 "gattid",
                                 "@timestamp",
+                                "heart_rate",
+                                "spo2"
                             ],
                             "size": 1,
                             "sort": [
@@ -762,7 +764,7 @@ export const fetchDashboardPatients = (t1, t2) => async dispatch => {
                             ]
                         }
                     },
-                    "agg_time_prev": {
+                    "agg_period": {
                         "date_range": {
                             "field": "@timestamp",
                             "format": "epoch_millis",
@@ -793,13 +795,13 @@ export const fetchDashboardPatients = (t1, t2) => async dispatch => {
                             }
                         }
                     },
-                    "agg_time_cur": {
+                    "agg_period_prev": {
                         "date_range": {
                             "field": "@timestamp",
                             "format": "epoch_millis",
                             "ranges": [
                                 {
-                                    "from": t2.valueOf()
+                                    "to": t2.valueOf()
                                 }
                             ]
                         },
@@ -836,15 +838,15 @@ export const fetchDashboardPatients = (t1, t2) => async dispatch => {
     })
         .then((res) => {
             const buckets = res.data.aggregations.agg_id.buckets.map(bucket => {
-                const cur = bucket.agg_time_cur.buckets[0].agg_latest.hits.hits[0]
-                const prev = bucket.agg_time_prev.buckets[0].agg_latest.hits.hits[0]
+                const latest = bucket.agg_latest.hits.hits[0]
+                const period = bucket.agg_period.buckets[0].agg_latest.hits.hits[0]
+                const prev = bucket.agg_period_prev.buckets[0].agg_latest.hits.hits[0]
                 return (
                     {
-                        id: bucket.agg_latest.hits.hits[0]._source.gattid,
-                        heart_rate: cur ? cur._source.heart_rate : null,
-                        heart_rate_prev: prev ? prev._source.heart_rate : null,
-                        spo2: cur ? cur._source.spo2 : null,
-                        spo2_prev: prev ? prev._source.spo2 : null
+                        id: latest._source.gattid,
+                        heart_rate: period ? period._source.heart_rate : prev ? prev._source.heart_rate : null,
+                        spo2: period ? period._source.spo2 : prev ? prev._source.spo2 : null,
+                        period : period ? true : false
                     }
                 )
             })
