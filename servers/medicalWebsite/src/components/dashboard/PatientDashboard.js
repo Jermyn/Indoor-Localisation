@@ -67,7 +67,7 @@ const styles = {
 
 };
 
-const checkpoints = [6, 12, 16, 20]
+const checkpoints = [8, 12, 16, 20]
 
 const mapStateToProps = state => {
     return {
@@ -112,8 +112,8 @@ class PatientDashboard extends Component {
     componentDidMount() {
         this.props.fetchRooms()
         this.props.readPatients()
-        this.updatePatientsES()
-        this.timer = setInterval(() => this.updatePatientsES(), 5000);
+        this.periodUpdate()
+        this.timer = setInterval(() => this.periodUpdate(), 5000);
     }
 
     componentWillUnmount() {
@@ -161,11 +161,20 @@ class PatientDashboard extends Component {
 
     }
 
-    async updatePatientsES() {
+    async periodUpdate() {
         if (this.state.periodCounter === 0) {
             await this.setupTime()
-            this.props.fetchDashboardPatients(this.state.tCur.clone().subtract(15, 'minutes'), this.state.tNext.clone().subtract(15, 'minutes'));
+            this.updatePatientsES()
         }
+    }
+
+    updatePatientsES() {
+        let t1 = this.state.tCur.clone().subtract(15, 'minutes')
+        let t2 = this.state.tNext.clone().subtract(15, 'minutes')
+        if (this.state.tCur.hours() === checkpoints[0]) {
+            t1.subtract(2, 'hours')
+        }
+        this.props.fetchDashboardPatients(t1, t2);
     }
 
     displaySinglePatient(id) {
@@ -234,7 +243,7 @@ class PatientDashboard extends Component {
             }))
         }
 
-        this.props.fetchDashboardPatients(this.state.tCur.clone().subtract(15, 'minutes'), this.state.tNext.clone().subtract(15, 'minutes'));
+        this.updatePatientsES();
     }
 
     renderAppBar() {
