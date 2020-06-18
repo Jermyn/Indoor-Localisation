@@ -307,9 +307,12 @@ class PatientDashboard extends Component {
                 <Button variant="contained" size={"large"} color="primary" onClick={() => this.handlePeriodBtn(false)}>
                     {"<<"}
                 </Button>
+                { this.state.periodCounter < 0 ?
                 <Button variant="contained" size={"large"} color="primary" onClick={() => this.handlePeriodBtn(true)}>
                     {">>"}
                 </Button>
+                    : null
+                }
             </Grid>
             <Grid item xs={4}/>
             <Grid item xs={4}>
