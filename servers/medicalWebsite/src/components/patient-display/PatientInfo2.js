@@ -261,7 +261,6 @@ class PatientInfo2 extends Component {
         const {classes} = this.props;
         const {anchorEl, auth} = this.state;
         const open = Boolean(anchorEl)
-
         if (!this.props.info) {
             return <div></div>
         }

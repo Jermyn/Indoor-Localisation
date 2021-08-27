@@ -1,0 +1,47 @@
+{
+  "zmqSockets": {
+    "vitals": {
+      "pushpull":             "tcp://10.0.12.15:5566"
+    },
+    "beaconData": {
+      "pushpull":             "tcp://10.0.12.15:5556"
+    },
+    "rawData": {
+      "pushpull":                  "tcp://10.0.12.15:5572"
+    },
+    "sms": {
+      "pushpull":             "tcp://10.0.12.15:5557"
+    },
+    "rawRSSI": {
+      "pushpull":             "tcp://10.0.12.15:5562"
+    },
+    "battery": {
+      "pushpull":                  "tcp://10.0.12.15:5558"
+    },
+    "finalReading": {
+      "pushpull":             "tcp://10.0.12.15:5559"
+    },
+    "analysis": {
+      "pushpull":             "tcp://10.0.12.15:5560"
+    },
+    "broker": {
+      "xpub":                 "tcp://10.0.12.15:5567",
+      "xsub":                 "tcp://10.0.12.15:5568",
+      "router":               "tcp://10.0.12.15:5570",
+      "dealer":               "tcp://10.0.12.15:5571"
+    },
+    "serverRequests": {
+      "reqrep":               "tcp://10.0.12.15:5569"
+    }
+  },
+  "notifications": {
+    "cacheUpdate":            "CACHE_UPDATE",
+    "cacheRequest":           "CACHE_REQUEST",
+    "serverHeartBeat":        "SERVER_HEARTBEAT",
+    "anchorStatus":           "ANCHOR_STATUS",
+    "gattNotification":       "GATT_NOTFICATION",
+    "connectGattRequest":     "CONNECT_GATT_REQUEST",
+    "positionUpdate":         "POSITION_UPDATE",
+    "gattAddition":           "GATT_ADDITION"
+  }
+}

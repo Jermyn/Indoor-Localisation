@@ -19,50 +19,53 @@ beaconData.bind(config['zmqSockets']['beaconData']['pushpull'])
 
 # state
 edges = defaultdict(lambda: {})
-
-def beaconObservable (observer):
-  while True:
+while True:
     data = beaconData.recv_json()
-    observer.on_next(data)
+    print (data)
 
-def subscribe (xss):
-  global edges
-  now = int(time.time() * 1000)
-  # update edges
-  for xs in xss:
-    for x in xs:
-      if all(k in x for k in ['transmitterId', 'receiverId']):
-        x['updatedAt'] = now
-        if x['transmitterId'] in edges and x['receiverId'] in edges[x['transmitterId']]:
-          # update
-          edges[x['transmitterId']][x['receiverId']].update(x)
-        else:
-          # create
-          x['createdAt'] = now
-          edges[x['transmitterId']].update({
-            x['receiverId']: x
-          })
+# def beaconObservable (observer):
+#   while True:
+#     data = beaconData.recv_json()
+#     observer.on_next(data)
 
-  # expire edges
-  rms = []
-  for t in edges:
-    for r in edges[t]:
-      # print (edges[t][r])
-      try:
-        # print (edges[t][r]['transmitterId'], "sending")
-        if now - edges[t][r]['updatedAt'] > 3000 + 10 * edges[t][r]['period']:
-          rms.append((t,r))
-      except:
-        # print (edges[t][r]['transmitterId'], "failed")
-        continue
-  for t,r in rms:
-    del edges[t][r]
+# def subscribe (xss):
+#   global edges
+#   now = int(time.time() * 1000)
+#   # update edges
+#   for xs in xss:
+#     for x in xs:
+#       if all(k in x for k in ['transmitterId', 'receiverId']):
+#         x['updatedAt'] = now
+#         if x['transmitterId'] in edges and x['receiverId'] in edges[x['transmitterId']]:
+#           # update
+#           edges[x['transmitterId']][x['receiverId']].update(x)
+#         else:
+#           # create
+#           x['createdAt'] = now
+#           edges[x['transmitterId']].update({
+#             x['receiverId']: x
+#           })
 
-Observable.create(beaconObservable) \
-.subscribe_on(Scheduler.new_thread) \
-.buffer_with_time(500) \
-.subscribe(on_next=subscribe)
+#   # expire edges
+#   rms = []
+#   for t in edges:
+#     for r in edges[t]:
+#       # print (edges[t][r])
+#       try:
+#         # print (edges[t][r]['transmitterId'], "sending")
+#         if now - edges[t][r]['updatedAt'] > 3000 + 10 * edges[t][r]['period']:
+#           rms.append((t,r))
+#       except:
+#         # print (edges[t][r]['transmitterId'], "failed")
+#         continue
+#   for t,r in rms:
+#     del edges[t][r]
 
-# export
-def getEdges():
-  return copy.deepcopy(edges)
+# Observable.create(beaconObservable) \
+# .subscribe_on(Scheduler.new_thread) \
+# .buffer_with_time(500) \
+# .subscribe(on_next=subscribe)
+
+# # export
+# def getEdges():
+#   return copy.deepcopy(edges)

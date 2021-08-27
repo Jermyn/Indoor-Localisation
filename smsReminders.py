@@ -26,7 +26,6 @@ token = "f42ff582af35dff92c1d4fd1c6ba1d1a"
 client = Client(account, token)
 updates = []
 allDevicesInRange = []
-companyHeader = "SoilBuild Defu Dormitory"
 morningTime = 8
 afternoonTime = 12
 eveningTime = 16
@@ -47,6 +46,16 @@ def fetchAllPatients():
     except:
       continue
   return allPatients
+
+def getRoomNumByName(patientName):
+  global db
+  patients = db.child("patients").get()
+  for patient in patients.val():
+    try:
+      if str(patient["name"]) == str(patientName):
+        return patient["room"]["name"]
+    except:
+      continue
 
 def getPatientName(poxid):
   global db
@@ -126,44 +135,43 @@ def translateDevToWorker(allDevicesInRange):
 
 
 def getAllPatientsYetSubmit(startTime, endTime):
-  global es_conn, companyHeader
+  global es_conn
   notyetsubmitPatients = []
   print ("fetching from es...")
   allDevicesInRange = fetchFromES(es_conn, startTime, endTime)
   updates = translateDevToWorker(allDevicesInRange)
   print ("Checking for patients who have yet to submit...")
   allPatients = fetchAllPatients()
-  messageBody = companyHeader + "\n" + "The following residents have yet to submit their measurements:"
-  messageWorkerBody = companyHeader + "\n" + "Please take your pulse oximeter measurement now."
+  messageBody = "The following residents have yet to submit their measurements:"
+  # messageWorkerBody = companyHeader + "\n" + "Please take your pulse oximeter measurement now."
   for p in allPatients:
     if p not in updates:
       if p not in notyetsubmitPatients:
           notyetsubmitPatients.append(p)
           patientLang = getPatientLangByName(p)
           hp = getPhoneNumberByName(p)
+          roomNum = getRoomNumByName(p)
           if patientLang == 'english':
-            strMessage = "Please take your pulse oximeter measurement now."
+            strMessage = "Please take your pulse oximeter measurement now. After taking your pulse oximeter measurement, if you do not receive a SMS within 1 minute, please go closer to the electronic device with the lights near the bathroom."
           elif patientLang == 'chinese':
-            strMessage = "请立即进行脉搏血氧仪的测量。"
+            strMessage = "请立即进行脉搏血氧仪的测量。完成脉搏血氧仪的测量后，如果您在1分钟内未收到短信，请靠近浴室附近有灯的电子仪器。"
           elif patientLang == 'tamil':
-            strMessage = "தயவுசெய்து உங்கள் துடிப்பு ஆக்சிமீட்டர் அளவீட்டை இப்போது எடுத்துக் கொள்ளுங்கள்."
+            strMessage = "தயவுசெய்து உங்கள் துடிப்பு ஆக்சிமீட்டர் அளவீட்டை இப்போது எடுத்துக் கொள்ளுங்கள். உங்கள் துடிப்பு ஆக்சிமீட்டர் அளவீட்டை எடுத்த பிறகு, 1 நிமிடத்திற்குள் நீங்கள் ஒரு எஸ்எம்எஸ் பெறவில்லை என்றால், தயவுசெய்து குளியலறையின் அருகிலுள்ள விளக்குகளுடன் மின்னணு சாதனத்திற்கு அருகில் செல்லுங்கள்."
           elif patientLang == 'bengali':
-            strMessage = "দয়া করে এখন আপনার নাড়ির অক্সিমিটার পরিমাপ করুন।"
+            strMessage = "দয়া করে এখন আপনার নাড়ির অক্সিমিটার পরিমাপ করুন।. আপনার পালস অক্সিমিটার পরিমাপ করার পরে, আপনি যদি 1 মিনিটের মধ্যে এসএমএস না পান তবে দয়া করে বাথরুমের নিকটবর্তী লাইটগুলি সহ বৈদ্যুতিন ডিভাইসের নিকটে যান।"
           elif patientLang == 'hindi':
-            strMessage = "कृपया अपनी पल्स ऑक्सीमीटर माप लें।"
+            strMessage = "कृपया अपनी पल्स ऑक्सीमीटर माप लें।. अपना पल्स ऑक्सीमीटर माप लेने के बाद, यदि आपको 1 मिनट के भीतर एसएमएस प्राप्त नहीं होता है, तो कृपया बाथरूम के पास रोशनी के साथ इलेक्ट्रॉनिक डिवाइस के करीब जाएं।"
           else:
-            strMessage = "ကျေးဇူးပြုပြီးသင်၏သွေးခုန်နှုန်းတိုင်းတာမှုကိုယခုယူပါ။"
-          messageWorkerBody = companyHeader + "\n" + strMessage
-          print (messageWorkerBody + str(p))
+            strMessage = "ကျေးဇူးပြုပြီးသင်၏သွေးခုန်နှုန်းတိုင်းတာမှုကိုယခုယူပါ။. သင်၏သွေးခုန်နှုန်းတိုင်းတာပြီးနောက်သင် ၁ မိနစ်အတွင်း SMS မရရှိပါကရေချိုးခန်းနားတွင်ရှိသောမီးများရှိအီလက်ထရောနစ်ပစ္စည်းနှင့်နီးပါ။"
+          messageWorkerBody = strMessage
           strPatient = p
-          messageBody += "\n" + str(p)
+          messageBody += "\n" + str(p) + " (" + str(roomNum) + ")"
           try:
             message = client.messages.create(to=hp, from_="Defu Dorm",
                                          body=messageWorkerBody)
             print (message.status)
           except:
             pass
-  print (messageBody)
   try:
     message = client.messages.create(to=operatorNumber['Robin'], from_="Defu Dorm",
                                        body=messageBody)
@@ -175,7 +183,7 @@ def getAllPatientsYetSubmit(startTime, endTime):
     pass
 
 def getAllPatientsDidNotSubmit(startTime, endTime):
-  global es_conn, companyHeader
+  global es_conn
   didnotsubmitPatients = []
   print ("fetching from es...")
   print (startTime, endTime)
@@ -185,16 +193,16 @@ def getAllPatientsDidNotSubmit(startTime, endTime):
   now   = int(time.time() * 1000)
   dateInitial = datetime.fromtimestamp(int(now/1000))
   allPatients = fetchAllPatients()
-  messageBody = companyHeader + "\n" + "The following residents did not submit their measurements:"
+  messageBody = "The following residents did not submit their measurements:"
   for p in allPatients:
     if p not in updates:
       if p not in didnotsubmitPatients:
         didnotsubmitPatients.append(p)
+        roomNum = getRoomNumByName(p)
         strPatient = p
-        messageBody += "\n" + str(p)
+        messageBody += "\n" + str(p) + " (" + str(roomNum) + ")"
   if didnotsubmitPatients == []:
     print ("All residents submitted...")
-  print (messageBody)
   try:
     message = client.messages.create(to=operatorNumber['Robin'], from_="Defu Dorm",
                                  body=messageBody)
@@ -210,16 +218,14 @@ def getAllPatientsDidNotSubmit(startTime, endTime):
 ## SCHEDULES
 ####################################################################################
 
-schedule.every().day.at("0" + str(morningTime+1) + ":01").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T06:00', str(datetime.today().strftime("%Y-%m-%d")) + 'T09:00')
+schedule.every().day.at("0" + str(morningTime+1) + ":00").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T06:00', str(datetime.today().strftime("%Y-%m-%d")) + 'T09:00')
 schedule.every().day.at(str(afternoonTime) + ":00").do(getAllPatientsDidNotSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T06:00', str(datetime.today().strftime("%Y-%m-%d")) + 'T11:59')
 schedule.every().day.at(str(afternoonTime+1) + ":00").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T11:40', str(datetime.today().strftime("%Y-%m-%d")) + 'T13:00')
 schedule.every().day.at(str(eveningTime) + ":00").do(getAllPatientsDidNotSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T11:40', str(datetime.today().strftime("%Y-%m-%d")) + 'T15:59')
-schedule.every().day.at(str(eveningTime+1) + ":00").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T15:45', str(datetime.today().strftime("%Y-%m-%d")) + 'T17:00')
-schedule.every().day.at(str(nightTime) + ":00").do(getAllPatientsDidNotSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T15:45', str(datetime.today().strftime("%Y-%m-%d")) + 'T19:59')
-schedule.every().day.at(str(nightTime+1) + ":00").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T19:45', str(datetime.today().strftime("%Y-%m-%d")) + 'T21:16')
+schedule.every().day.at(str(eveningTime+1) + ":00").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T15:40', str(datetime.today().strftime("%Y-%m-%d")) + 'T17:00')
+schedule.every().day.at(str(nightTime) + ":00").do(getAllPatientsDidNotSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T15:40', str(datetime.today().strftime("%Y-%m-%d")) + 'T19:59')
+schedule.every().day.at(str(nightTime+1) + ":00").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T19:40', str(datetime.today().strftime("%Y-%m-%d")) + 'T21:00')
 schedule.every().day.at("0" + str(morningTime) + ":00").do(getAllPatientsDidNotSubmit, str((datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")) + 'T20:00', str(datetime.today().strftime("%Y-%m-%d")) + 'T05:59')
-# schedule.every().day.at("17:20").do(getAllPatientsYetSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T16:00', str(datetime.today().strftime("%Y-%m-%d")) + 'T18:00')
-# schedule.every().day.at("17:20").do(getAllPatientsDidNotSubmit, str(datetime.today().strftime("%Y-%m-%d")) + 'T16:00', str(datetime.today().strftime("%Y-%m-%d")) + 'T18:00')
 
 ####################################################################################
 ## THREADS

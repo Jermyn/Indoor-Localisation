@@ -274,6 +274,7 @@ export default class testLoadMap extends Component {
     
     render() {
         const {staticDevices, transientDevices, movingDevices, onTroubleshoot } = this.props;
+        console.log (transientDevices)
         let neighbors = (movingDevices[0] != undefined ? movingDevices[0]["neighbors"] : void 0)
         let result = (neighbors != undefined ? this.computeNeighborsDevices(neighbors) : void 0)
         let imageURL = "mapbox://styles/mapbox/dark-v9";

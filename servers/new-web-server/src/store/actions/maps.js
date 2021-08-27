@@ -11,7 +11,7 @@ restUrl = require('../../config').apiServer.rest.url;
 _ = require('underscore');
 
 ({FETCH_MAPS, LOAD_MAP, UPDATE_FEATURES} = require('./actionTypes'));
-
+console.log (restUrl)
 request = function({query, variables}) {
   return axios({
     method: 'post',

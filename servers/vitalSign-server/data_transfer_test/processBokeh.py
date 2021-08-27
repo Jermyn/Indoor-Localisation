@@ -133,7 +133,7 @@ def dynamicGraphs(deviceId):
 
 def updateCache():
     requests = zmq.Context().socket(zmq.REQ)
-    requests.connect('tcp://137.132.165.139:5570')
+    requests.connect('tcp://52.77.184.100:5570')
     global cache
     requests.send_string("CACHE_REQUEST")
     cache = requests.recv_json()
@@ -150,7 +150,7 @@ for gatt in cache['gatts']:
         for characther in cache['gatts'][gatt]['profile'][key].keys():
             if characther not in charac:
                 charac.append(characther)
-# print(chrac)
+print(chrac)
 def uuidChanged(attr,old,new):
     global currentUUID, currentCharac
     # if new != currentUUID:
@@ -537,7 +537,7 @@ def heartRate(x):
             #     endProcess("hrOutput_" + str(time.time()) + ".csv", dataHrList, 1000)
 
 requests = zmq.Context().socket(zmq.PULL)
-requests.bind('tcp://137.132.165.139:5566')
+requests.bind('tcp://52.77.184.100:5566')
 
 def main():
     global flag, done, ctHR, currentCharac, deviceQueue, currentUUID, sensor, sourceAx, sourceAy, sourceAz, sourceAx2, sourceAy2, sourceAz2 

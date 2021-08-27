@@ -1,4 +1,4 @@
-from cache import getCache
+# from cache import getCache
 from listenRawData import getEdges
 from postgres import connectDatabase, fetchAnchorData, inputAnchorData
 # from aggregate import getEdges
@@ -29,7 +29,7 @@ import time
 ## State
 ####################################################################################
 
-cache         = {}
+# cache         = {}
 avgRSSI     = None
 meanRSSI1 = 0
 meanRSSI2 = 0
@@ -48,7 +48,7 @@ def processEdges(interval, startTime):
   measuredPower = 0
   edges         = getEdges()
   now           = int(time.time() * 1000)
-  progress = int(((now-startTime)/int(sys.argv[1]))*100)
+  progress = (float(now-startTime)/int(sys.argv[1]))*100
   try:
     if (now - startTime) < int(sys.argv[1]):##argument1:duration
       if avgRSSI == None:
@@ -62,12 +62,13 @@ def processEdges(interval, startTime):
       inputAnchorData(conn, sys.argv[3], float("{0:.2f}".format(avgRSSI)))
       fetchAnchorData(conn, sys.argv[3])
       conn.close()
-      avgRSSI = None
+      # avgRSSI = None
       # meanRSSI = mean(avgRSSI)
       # measuredPower = getMeasuredPower(meanRSSI, float(sys.argv[4]))##argument4: distance
       # avgRSSI = []
+      # print (measuredPower)
   except:
-    pass
+    raise
   return progress
 
 ####################################################################################
@@ -83,7 +84,7 @@ def listenForCacheUpdates():
       updateCache()
 
 
-def main(run):
+def main():
   interval = 0.5
   progress = 0
   mode = 1
@@ -91,17 +92,11 @@ def main(run):
   while progress < 100:
     time.sleep(interval)
     try:
-      if run == 1:
-        progress = processEdges(interval*1000, startTime)
-        print (progress)
-      elif run == 2:
-        progress = 0
-        progress = processEdges(interval*1000, startTime)
-        print (progress)
+      progress = processEdges(interval*1000, startTime)
+      print ("progress: ", progress)
     except:
       raise
-
-  # sys.exit(0)
+  sys.exit(0)
   # if run == 2:
   #   print (meanRSSI1, meanRSSI2)
   #   offset = getOffset(float(sys.argv[5]), float(sys.argv[4]), float(meanRSSI1), float(meanRSSI2))##5th argument is initial distance
@@ -129,12 +124,4 @@ def main(run):
 # t1.start()
 
 # main loop
-run = 1
-noOfTries = 1
-while run <= int(noOfTries):
-  if run == 1:
-    main(run)
-  if run == 2:
-    if input("Enter the enter key to start the second testing...") == '':
-      main(run)
-  run+=1
+main()

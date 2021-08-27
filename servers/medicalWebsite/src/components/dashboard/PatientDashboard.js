@@ -92,6 +92,7 @@ const mapDispatchToProps = dispatch => {
 };
 
 class PatientDashboard extends Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -101,20 +102,18 @@ class PatientDashboard extends Component {
             drawer: false,
             isAuthenticating: true,
 
-            cpCur: 0,
             tPrev: moment(),
             tCur: moment(),
             tNext: moment(),
-
-            displayCur: true
+            periodCounter: 0,
         };
     }
 
     componentDidMount() {
         this.props.fetchRooms()
         this.props.readPatients()
-        this.updatePatientsES()
-        this.timer = setInterval(() => this.updatePatientsES(), 5000);
+        this.periodUpdate()
+        this.timer = setInterval(() => this.periodUpdate(), 5000);
     }
 
     componentWillUnmount() {
@@ -131,10 +130,21 @@ class PatientDashboard extends Component {
         }
     }
 
-    updatePatientsES() {
-        const t = moment()
-        const cpCur = t.hours() >= checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= t.hours())) : checkpoints.slice(-1)[0]
+    setStateAsync(state) {
+        return new Promise((resolve) => {
+            this.setState(state, resolve)
+        });
+    }
 
+    async setupTime() {
+        const t = moment()
+        let timeNow = t.hours()
+        // let tPrev = moment().set({date: 17, hour: 12, minute: 0, second: 0, millisecond: 0})
+        // let tCur = moment().set({date: 17, hour: 13, minute: 0, second: 0, millisecond: 0})
+        // let tNext = moment().set({date: 17, hour: 15, minute: 0, second: 0, millisecond: 0})
+        // await this.setStateAsync({tPrev, tCur, tNext})
+        const cpCur = timeNow >= checkpoints[0] ? Math.max.apply(Math, checkpoints.filter(x => x <= timeNow)) : checkpoints.slice(-1)[0]
+        // const cpCur = 7
         if (cpCur !== this.state.cpCur) {
             const cpPrev = checkpoints[(checkpoints.indexOf(cpCur) - 1 + checkpoints.length) % checkpoints.length]
             const cpNext = checkpoints[(checkpoints.indexOf(cpCur) + 1) % checkpoints.length]
@@ -142,29 +152,45 @@ class PatientDashboard extends Component {
             let tPrev = moment().set({hour: cpPrev, minute: 0, second: 0, millisecond: 0})
             let tCur = moment().set({hour: cpCur, minute: 0, second: 0, millisecond: 0})
             let tNext = moment().set({hour: cpNext, minute: 0, second: 0, millisecond: 0})
-
-            if (cpPrev === checkpoints.slice(-1)[0]) {
-                tPrev = tPrev.subtract(1, 'days')
+            console.log(checkpoints.slice(-1)[0], cpPrev, cpNext, cpCur)
+            if (timeNow < checkpoints[0]) {
+                tCur.subtract(1, 'days')
+                tPrev.subtract(1, 'days')
             }
-            if (cpNext === checkpoints[0]) {
-                tNext = tNext.add(1, 'days')
-                tCur = tCur.subtract(1, 'days')
-                tPrev = tPrev.subtract(1, 'days')
+            else if (cpPrev === checkpoints.slice(-1)[0]) {
+                tPrev.subtract(1, 'days')
+            } else if (cpNext === checkpoints[0]) {
+                tNext.add(1, 'days')
+                // tCur.subtract(1, 'days')
+                // tPrev.subtract(1, 'days')
             }
-            this.setState({cpCur, tPrev, tCur, tNext})
-            this.props.fetchDashboardPatients(tPrev, tCur);
-
-        } else {
-            this.props.fetchDashboardPatients(this.state.tPrev, this.state.tCur);
+            await this.setStateAsync({tPrev, tCur, tNext})
         }
 
+    }
+
+    async periodUpdate() {
+        if (this.state.periodCounter === 0) {
+            await this.setupTime()
+            this.updatePatientsES()
+        }
+    }
+
+    updatePatientsES() {
+        let t1 = this.state.tCur.clone().subtract(15, 'minutes')
+        let t2 = this.state.tNext.clone().subtract(15, 'minutes')
+        // let t1 = this.state.tCur.clone()
+        // let t2 = this.state.tNext.clone()
+        if (this.state.tCur.hours() === checkpoints[0]) {
+            t1.subtract(2, 'hours')
+        }
+        this.props.fetchDashboardPatients(t1, t2);
     }
 
     displaySinglePatient(id) {
         const patient = this.props.patients.find(patient => patient.devices[0].uuid === id)
         if (patient) {
             this.props.loadInfo(patient);
-            console.log('1', patient)
             this.props.history.push('/patientInfo2');
         } else {
             console.log('invalid patient')
@@ -197,8 +223,37 @@ class PatientDashboard extends Component {
         this.props.signOutUser()
     }
 
-    handlePeriodBtn = () => {
-        this.setState(prevState => ({displayCur: !prevState.displayCur}))
+    async handlePeriodBtn(isNext) {
+
+        if (isNext) {
+            let tNext = this.state.tNext.clone()
+            const cpNext = checkpoints[(checkpoints.indexOf(tNext.hours()) + 1) % checkpoints.length]
+            tNext.set({hour: cpNext})
+            if (cpNext === checkpoints[0]) {
+                tNext.add(1, "days")
+            }
+            await this.setStateAsync(prevState => ({
+                tPrev: prevState.tCur,
+                tCur: prevState.tNext,
+                tNext: tNext,
+                periodCounter: prevState.periodCounter + 1
+            }))
+        } else {
+            let tPrev = this.state.tPrev.clone()
+            const cpPrev = checkpoints[(checkpoints.indexOf(tPrev.hours()) - 1 + checkpoints.length) % checkpoints.length]
+            tPrev.set({hour: cpPrev})
+            if (cpPrev === checkpoints.slice(-1)[0]) {
+                tPrev = tPrev.subtract(1, 'days')
+            }
+            await this.setStateAsync(prevState => ({
+                tPrev: tPrev,
+                tCur: prevState.tPrev,
+                tNext: prevState.tCur,
+                periodCounter: prevState.periodCounter - 1
+            }))
+        }
+
+        this.updatePatientsES();
     }
 
     renderAppBar() {
@@ -254,20 +309,16 @@ class PatientDashboard extends Component {
         return <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
             <Grid item xs={4}>
                 <Grid item>
-                    {this.state.displayCur ?
-                        <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
-                            <strong>Current Period: </strong>
-                            {this.state.tCur.format('DD/MM HH:mm')} - {this.state.tNext.format('DD/MM HH:mm')}
-                        </Typography>
-                        :
-                        <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
-                            <strong>Prev Period: </strong>
-                            {this.state.tPrev.format('DD/MM HH:mm')} - {this.state.tCur.format('DD/MM HH:mm')}
-                        </Typography>
-                    }
+                    <Typography gutterBottom variant="h4" component="h4" color={'inherit'}>
+                        <strong>Current Period: </strong>
+                        {this.state.tCur.format('DD/MM HH:mm')} - {this.state.tNext.format('DD/MM HH:mm')}
+                    </Typography>
                 </Grid>
-                <Button variant="contained" size={"large"} color="primary" onClick={this.handlePeriodBtn}>
-                    {this.state.displayCur ? "<<" : ">>"}
+                <Button variant="contained" size={"large"} color="primary" onClick={() => this.handlePeriodBtn(false)}>
+                    {"<<"}
+                </Button>
+                <Button variant="contained" size={"large"} color="primary" onClick={() => this.handlePeriodBtn(true)}>
+                    {">>"}
                 </Button>
             </Grid>
             <Grid item xs={4}/>
@@ -277,13 +328,13 @@ class PatientDashboard extends Component {
                         <StopIcon style={{color: '#777777'}}/> Inactive reading
                     </Typography>
                     <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                        <StopIcon style={{color: '#43a047'}}/> Normal Heart Rate and SpO2
+                        <StopIcon style={{color: '#43a047'}}/> Normal Pulse Rate and SpO2
                     </Typography>
                     <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                        <StopIcon style={{color: '#fb8c00'}}/> Abnormal Heart Rate or SpO2
+                        <StopIcon style={{color: '#fb8c00'}}/> Abnormal Pulse Rate or SpO2
                     </Typography>
                     <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                        <StopIcon style={{color: '#e53935'}}/> Abnormal Heart Rate and SpO2
+                        <StopIcon style={{color: '#e53935'}}/> Abnormal Pulse Rate and SpO2
                     </Typography>
                 </Grid>
             </Grid>
@@ -308,11 +359,10 @@ class PatientDashboard extends Component {
 
         return <Grid container className={classes.gridContainerMain} justify="flex-start" alignItems='flex-start'>
             {this.props.rooms && this.props.rooms.map((room) => (
+                room.name.includes("#01") === true ? 
                 <Grid container className={classes.gridContainerRoom} key={room.name}>
                     <Grid item xs={12}>
-                        <Typography gutterBottom variant="h5" onClick={() => {
-                            console.log('click room')
-                        }}>
+                        <Typography gutterBottom variant="h5">
                             <strong>{room.name}</strong>
                         </Typography>
                     </Grid>
@@ -321,20 +371,19 @@ class PatientDashboard extends Component {
                             return (
                                 <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
                                       key={patient.id} onClick={() => this.displaySinglePatient(patient.id)}>
-                                    <PatientReading patient={patient} checkpoints={checkpoints}
-                                                    curCp={this.state.curCp} displayCur={this.state.displayCur}/>
+                                    <PatientReading patient={patient}/>
                                 </Grid>
                             )
                         }
                     )}
-                </Grid>
+                </Grid> : void 0
             ))}
         </Grid>;
     }
 
     render() {
         const {classes} = this.props;
-
+        console.log (this.props.patients_es)
         return (
             <div className={classes.root}>
                 {this.renderAppBar()}

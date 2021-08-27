@@ -84,7 +84,6 @@ class PlaybackChart extends React.Component {
     componentDidUpdate(prevProps, prevState) {
         if (this.props.vitals !== prevProps.vitals && this.props.vitals != null && this.props.vitals.length != 0) {
             let vitals = this.props.vitals
-
             const oldBtcDataSet = this.state.lineChartData.datasets[0];
 
             let chartpoints = []
@@ -111,7 +110,6 @@ class PlaybackChart extends React.Component {
                 labels.push(epoch)
                 newBtcDataSet.data.push(vitalSign);
             })
-
             let tmp = {};
             chartpoints.forEach((date) => {
                 let obj = tmp[date[0]] = tmp[date[0]] || {count: 0, total: 0};
@@ -195,15 +193,15 @@ class PlaybackChart extends React.Component {
                     >
                         <ChartRow height="400">
                             <YAxis id="y"
-                                   label={this.props.data_type == 'heartrate' ? 'Heart Rate (bpm)' : 'Oxygen Saturation (%)'}
-                                   min={60}
-                                   max={this.props.data_type == 'heartrate' ? 160 : 101}
+                                   label={this.props.data_type == 'heartrate' ? 'Pulse Rate (bpm)' : 'Oxygen Saturation (%)'}
+                                   min={this.props.data_type == 'heartrate' ? 50 : 80}
+                                   max={this.props.data_type == 'heartrate' ? 160 : 100}
                                 // min={this.props.data_type == 'heartrate' ? timeseries.min() - 20 : timeseries.min() - 10}
                                 // max={this.props.data_type == 'heartrate' ? timeseries.max() + 20 : 100}
                                    width="60" type="linear"/>
                             <Charts>
-                                {/*<Baseline axis="y" label="Lower" position="right"*/}
-                                {/*          value={this.props.data_type == 'heartrate' ? 0 : 95}/>*/}
+                                <Baseline axis="y" position="right"
+                                         value={this.props.data_type == 'heartrate' ? 110 : 95}/>
                                 {/*<Baseline axis="y" label="Upper" position="right"*/}
                                 {/*          value={this.props.data_type == 'heartrate' ? 90 : 200}/>*/}
                                 <MultiBrush timeRanges={this.state.emptyrange}/>

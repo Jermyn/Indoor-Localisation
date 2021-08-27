@@ -1,0 +1,8 @@
+date = new Date(1590019200000)
+console.log (date)
+hours = date.getHours()
+console.log (hours)
+mins = date.getMinutes()
+console.log (mins)
+secs = date.getSeconds()
+console.log (secs)

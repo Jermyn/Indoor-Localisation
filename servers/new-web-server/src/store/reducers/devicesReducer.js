@@ -14,7 +14,7 @@ module.exports = function(state = {
   switch (action.type) {
     case FETCH_DEVICES:
       return Object.assign({}, state, {
-        devices: _(action.payload).indexBy('id'),
+        devices: action.payload,
         staticDevices: action.payload.filter(function({type}) {
           return type === 'static';
         }),

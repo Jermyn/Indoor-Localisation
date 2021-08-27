@@ -7,7 +7,7 @@ config    = require '../config'
 ## ZMQ SOCKETS
 ########################################################################
 
-beaconData        = zmq.socket('pull').bind(config.zmqSockets.beaconData.pushpull)
+beaconData        = zmq.socket('pull').bind(config.zmqSockets.sms.pushpull)
 
 beaconData.on('message', -> console.log message)
 

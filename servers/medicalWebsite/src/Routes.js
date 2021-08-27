@@ -1,5 +1,5 @@
-    import React from "react";
-import { Route, Switch } from "react-router-dom";
+import React from "react";
+import { Route, Switch, Link } from "react-router-dom";
 import Home from "./Home";
 import Login from "./Login";
 import AddPatient from "./AddPatient";
@@ -15,6 +15,8 @@ import AddConfirmation from "./AddConfirmation"
 import PatientDashboard from "./components/dashboard/PatientDashboard";
 import AssignAnchors from "./AssignAnchors"
 import anchorInfo from "./anchorInfo";
+// import Redirect from './Redirect'
+import Visualize from './Visualize'
 
 export default () =>
   <Switch>
@@ -35,4 +37,6 @@ export default () =>
     <Route path="/dashboard" exact component={PatientDashboard} />
     <Route path="/AssignAnchors" exact component={AssignAnchors} />
     <Route path="/anchorInfo" exact component={anchorInfo} />
+    <Route path="/visualise" exact component={Visualize} />
+    {/*<Route path="/visualise" exact component={ Redirect } />*/}
   </Switch>;

@@ -1,14 +1,14 @@
 {
   "webServer": {
-    "ip":                     "137.132.165.139",
+    "ip":                     "52.77.184.100",
     "port":                   80
   },
   "apiServer": {
     "rest": {
-      "url":                  "http://137.132.165.139:3000/api"
+      "url":                  "http://52.77.184.100:3000/api"
     },
     "graphql": {
-      "url":                  "http://137.132.165.139:3000/graphql"
+      "url":                  "http://52.77.184.100:3000/graphql"
     }
   },
   "elkServer": {
@@ -23,19 +23,19 @@
   },
   "zmqSockets": {
     "anchorData": {
-      "pushpull":             "tcp://137.132.165.139:5566"
+      "pushpull":             "tcp://52.77.184.100:5566"
     },
     "beaconData": {
-      "pushpull":             "tcp://137.132.165.139:5556"
+      "pushpull":             "tcp://52.77.184.100:5556"
     },
     "broker": {
-      "xpub":                 "tcp://137.132.165.139:5567",
-      "xsub":                 "tcp://137.132.165.139:5568",
-      "router":               "tcp://137.132.165.139:5570",
-      "dealer":               "tcp://137.132.165.139:5571"
+      "xpub":                 "tcp://52.77.184.100:5567",
+      "xsub":                 "tcp://52.77.184.100:5568",
+      "router":               "tcp://52.77.184.100:5570",
+      "dealer":               "tcp://52.77.184.100:5571"
     },
     "serverRequests": {
-      "reqrep":               "tcp://137.132.165.139:5569"
+      "reqrep":               "tcp://52.77.184.100:5569"
     }
   },
   "notifications": {

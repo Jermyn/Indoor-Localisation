@@ -197,6 +197,11 @@ class PlaybackMode extends Component {
                 "bool": {
                     "must": [
                         {
+                            "exists": {
+                                "field": "spo2"
+                            }
+                        },
+                        {
                             "term": {
                                 "gattid": `${devices}`
                             }
@@ -215,40 +220,54 @@ class PlaybackMode extends Component {
             }
         };
 
-        axios.get(`/zmq/vitals/_search?scroll=1m`, {
-            params: {
-                source: JSON.stringify(query),
-                source_content_type: 'application/json'
-            }
-        }).then((res) => {
-            let fullTrace = res.data.hits.hits
+        fetch(`http://52.77.184.100:9200/vitals/_search?scroll=1m`, {
+            method: "POST",
+            body: JSON.stringify(query),
+            mode: 'cors',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+        }
+        }).then(res => res.json())
+        .then((data) => {
+            let fullTrace = data.hits.hits
             let fullShot = []
             fullShot = fullShot.concat(fullTrace)
 
-            let scroll_id = res.data._scroll_id
+            let scroll_id = data._scroll_id
             let scrollQuery = {
                 "scroll": "1m",
                 "scroll_id": scroll_id
             }
             this.getAPI(scrollQuery, fullShot, index, devices)
+        })
+        .catch(error => {
+            console.error(
+                "There has been a problem with your fetch operation:",
+                error
+            );
         });
     }
 
     getAPI = (scrollQuery, fullShot, index, devices) => {
-        axios.get(`/_search/scroll`, {
-            params: {
-                source: JSON.stringify(scrollQuery),
-                source_content_type: 'application/json'
-            }
-        }).then((res) => {
-            let fullTrace = res.data.hits.hits
+        fetch(`http://52.77.184.100:9200/_search/scroll`, {
+            method: "POST",
+            body: JSON.stringify(scrollQuery),
+            mode: 'cors',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+        }
+        }).then(res => res.json())
+        .then((data) => {
+            let fullTrace = data.hits.hits
             fullShot = fullShot.concat(fullTrace)
-            let scroll_id = res.data._scroll_id
+            let scroll_id = data._scroll_id
             let scrollQuery = {
                 'scroll': '1m',
                 'scroll_id': scroll_id
             }
-            let scroll_size = res.data.hits.hits.length
+            let scroll_size = data.hits.hits.length
             console.log('fullshot', fullShot)
             if (scroll_size > 0) {
                 this.getAPI(scrollQuery, fullShot, index, devices)
@@ -305,7 +324,7 @@ class PlaybackMode extends Component {
                 <div><Typography variant="subtitle1" style={{color: 'red'}}> {this.state.error}  </Typography></div>
                 <ExpansionPanel defaultExpanded={true}>
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
-                        <Typography variant="subtitle1" gutterBottom>Heart Rate</Typography>
+                        <Typography variant="subtitle1" gutterBottom>Pulse Rate</Typography>
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>
@@ -317,7 +336,7 @@ class PlaybackMode extends Component {
                 </ExpansionPanel>
                 <ExpansionPanel defaultExpanded={true}>
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
-                        <Typography variant="subtitle1" gutterBottom>SPO2</Typography>
+                        <Typography variant="subtitle1" gutterBottom>SpO2</Typography>
                     </ExpansionPanelSummary>
                     <ExpansionPanelDetails>
                         <div style={{width: '100%'}}>

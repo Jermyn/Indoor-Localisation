@@ -1,7 +1,7 @@
 #!/usr/local/bin/expect
 log_user 1 
 set USR     pi
-set PASSWD  raspberry
+set PASSWD  snickers
 set f [open "pssh_hosts.txt"]
 set hosts [split [read $f] "\n"]
 close $f
@@ -23,11 +23,15 @@ foreach host $hosts {
   	}
 	}
 	expect "sftp> "
-	send "cd node_client/scripts \r" 
+	send "cd node_client \r" 
 	expect "sftp> "
-	send "put reboot_hci.sh \r"
-	# expect "sftp> "
-	# send "put log.js \r" 
+	send "put pulse.js \r"
+	#expect "sftp> "
+	#send "put log.js \r" 
+	#expect "sftp> "
+	#send "cd configs \r"
+	#expect "sftp> "
+	#send "put aws_config.json \r"
 	# send "put uninstall.sh \r" 
 	expect "sftp> "
 	send "bye \r"

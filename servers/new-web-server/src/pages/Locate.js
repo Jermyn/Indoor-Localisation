@@ -8,6 +8,7 @@ import MaterialDialogForm from '../components/addDevices/MaterialDialogForm'
 import LoadMap from '../components/mapsFunction/locate'
 import { Observable } from 'rxjs/Rx'
 import Visibility from 'visibilityjs'
+import { indexOf } from '../draw-theme'
 // import tweenState from 'react-tween-state'
 
 class Locate extends Component {
@@ -73,39 +74,39 @@ class Locate extends Component {
     tweenTransientDevices = (deviceLogs) => {
         let transitionDevices = {}
         let newDevices = {}
-        deviceLogs.forEach(({id, lat, lng, map, neighbors}) => {
-            console.log({id, lat, lng, map, neighbors});
-            if (neighbors !== undefined) { 
-                transitionDevices[id] = {
-                neighbors: neighbors,
+        deviceLogs.forEach(({id, lat, lng, map}) => {
+            console.log({id, lat, lng, map});
+            // if (neighbors !== undefined) { 
+            transitionDevices[id] = {
+                // neighbors: neighbors,
                 lat: lat,
                 lng: lng
-                };
-                if (this.state.transientDevices[id] != null) {
-                transitionDevices[id] = {
-                    neighbors: neighbors,
-                    lat: lat,
-                    lng: lng
-                };
-                } else {
-                newDevices[id] = {
-                    neighbors: neighbors,
-                    lat: lat,
-                    lng: lng
-                };
-                }
+            };
+            if (this.state.transientDevices[id] != null) {
+            transitionDevices[id] = {
+                // neighbors: neighbors,
+                lat: lat,
+                lng: lng
+            };
+            } else {
+            newDevices[id] = {
+                // neighbors: neighbors,
+                lat: lat,
+                lng: lng
+            };
             }
         });
           
-          // add new devices
-          this.setState({
-            transientDevices: Object.assign({}, this.state.transientDevices, newDevices)
-          });
-          //Update current device
-          this.setState({
-            transientDevices: Object.assign({}, this.state.transientDevices, transitionDevices)
-          });
-          
+        // add new devices
+        this.setState({
+        transientDevices: Object.assign({}, this.state.transientDevices, newDevices)
+        });
+        //Update current device
+        this.setState({
+        transientDevices: Object.assign({}, this.state.transientDevices, transitionDevices)
+        });
+
+        console.log(this.state.transientDevices)
           // transition devices
         //   _(transitionDevices).each(({lat, lng}, id) => {
         //     this.tweenState(['transientDevices', `${id}`, 'lat'], {
@@ -158,6 +159,7 @@ class Locate extends Component {
     render() {
         const { currentMap, maps, staticDevices } = this.props;
         let movingDevices = this.state.movingDevice
+        console.log(this.state.deviceLogs)
         return (
             <div>
                 <MapsPanel
@@ -200,7 +202,7 @@ const mapStateToProps = (state) => {
         ),
         mobileDevices: state.devices.mobileDevices,
         deviceLogs: state.devices.deviceLogs.filter(({map, id}) =>
-            (map != null ? map.id : void 0) === (state.maps.currentMap !== null ? state.maps.currentMap.id : []) && (state.devices.devices[id])
+            (map != null ? map.id : void 0) === (state.maps.currentMap !== null ? state.maps.currentMap.id : []) && state.devices.devices.filter(({device}) => (device === id))
         ),
         maps: state.maps.maps,
         currentMap: state.maps.currentMap,

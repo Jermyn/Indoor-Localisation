@@ -1,11 +1,11 @@
-'use strict';
+// 'use strict';
 
 var axios = require('axios')
 var config = require('../../../config')
 
 module.exports = function(Device) {
   Device.logs = (cb) => {
-    axios.post(config.elkServer.url + "/zmq/position-update/_search", {
+    axios.post(config.elkServer.url + "/position_update/_search/", {
       "size": 0,
       "aggregations":{
         "id":{
@@ -18,7 +18,7 @@ module.exports = function(Device) {
               "top_hits":{
                 "size": 1,
                 "sort": [{"@timestamp": {"order": "desc"}}],
-                "_source": {"includes": ["lat", "lng","map","id","@timestamp", "neighbors"]}
+                "_source": {"includes": ["lat", "lng","map","id","@timestamp"]}
               }
             }
           }
@@ -29,6 +29,7 @@ module.exports = function(Device) {
       cb(null, data)
     })
     .catch((err) => {
+    	// console.log(err)
       cb(err)
     })
   }

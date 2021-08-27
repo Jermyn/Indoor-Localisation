@@ -2,7 +2,7 @@
   "name": "medicalportal",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://137.132.165.139:9200",
+  "proxy": "http://52.77.184.100:9200",
   "dependencies": {
     "@mapbox/maki": "^6.0.0",
     "@mapbox/mapbox-gl-draw": "^1.1.1",
@@ -42,7 +42,8 @@
     "redux-thunk": "^2.3.0",
     "rickshaw": "^1.6.6",
     "socket.io": "^2.2.0",
-    "socket.io-client": "^2.2.0"
+    "socket.io-client": "^2.2.0",
+    "tar": "^6.0.2"
   },
   "scripts": {
     "start": "react-scripts start",

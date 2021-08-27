@@ -14,3 +14,4 @@ requester.connect(config['zmqSockets']['broker']['router'])
 def getCache():
   requester.send_string(config['notifications']['cacheRequest'])
   return requester.recv_json()
+getCache()

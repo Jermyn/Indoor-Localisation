@@ -1,0 +1,17 @@
+[Unit]
+After=bluetooth.target
+Requires=bluetooth.target
+StartLimitIntervalSec=0
+
+[Service]
+SyslogIdentifier=pulse
+Type=simple
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+User=0
+Group=0
+ExecStart=/usr/local/bin/node /home/pi/node_client/pulse.js
+
+[Install]
+WantedBy=multi-user.target

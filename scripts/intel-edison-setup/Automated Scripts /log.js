@@ -44,9 +44,17 @@ iproute = function() {
   return execAsync(`ip route`);
 };
 
+ipaddress = function() {
+  return execAsync(`hostname -I`);
+};
+
+host = function() {
+  return execAsync(`hostname -s`)
+}
+
 module.exports = {
   getCurrentState: function() {
-    return Promise.all([address(), hciconfig(), ifconfig(), iwconfig(), iproute()]).then(function(xs) {
+    return Promise.all([address(), hciconfig(), ifconfig(), iwconfig(), iproute(), ipaddress(), host()]).then(function(xs) {
       return {
         // version: xs[0],
         address: xs[0],
@@ -54,7 +62,9 @@ module.exports = {
         hciconfig: xs[1],
         ifconfig: xs[2],
         iwconfig: xs[3],
-        iproute: xs[4]
+        iproute: xs[4],
+        ip: xs[5],
+        host: xs[6]
       };
     });
   }

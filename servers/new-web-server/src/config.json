@@ -1,14 +1,14 @@
 {
   "webServer": {
-    "ip":                     "137.132.165.139",
+    "ip":                     "13.250.217.181",
     "port":                   80
   },
   "apiServer": {
     "rest": {
-      "url":                  "http://137.132.165.139:3000/api"
+      "url":                  "http://13.250.217.181:3000/api"
     },
     "graphql": {
-      "url":                  "http://137.132.165.139:3000/graphql"
+      "url":                  "http://13.250.217.181:3000/graphql"
     }
   },
   "elkServer": {

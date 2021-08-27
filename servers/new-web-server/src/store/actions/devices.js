@@ -79,6 +79,7 @@ actions = {
         var query;
         query = "query { devices { id type location anchor { id sensitivity measuredPower offset device { id } } beacon { id device { id } measuredPower } gatt { id device { id } profile connect } } }";
         return request({query}).then(function({data}) {
+          console.log (data.data.devices)
           return dispatch({
             type: FETCH_DEVICES,
             payload: data.data.devices

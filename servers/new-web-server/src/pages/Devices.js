@@ -57,6 +57,7 @@ class Devices extends Component {
     render() {
         const { classes, mobileDevices, staticDevices } = this.props;
         const { value } = this.state;
+        console.log (staticDevices)
         return(
             <div className={classes.root}>
                 <AppBar position="static">

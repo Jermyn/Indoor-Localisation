@@ -62,6 +62,7 @@ import {
 
 import axios from 'axios'
 import template from "../database/template.json";
+import moment from "moment";
 
 var Promise, graphqlUrl, restUrl, _, request
 Promise = require('bluebird');
@@ -138,10 +139,6 @@ export const editPatient = patient => ({
 
 export const editRoom = room => async dispatch => {
     medicalPortalFirebase.database().ref().child(`rooms/${room.id}` + "/vacancy").set(room.vacancy)
-}
-
-export const AssignAnchorToRoom = room => async dispatch => {
-    medicalPortalFirebase.database().ref().child(`rooms/${room.id}` + "/anchors").set(room.anchor)
 }
 
 export const highlightPatient = patients => ({
@@ -245,7 +242,7 @@ export const fetchRooms = () => async dispatch => {
         .on('value', querySnapshot => {
             let rooms = []
             let snapshot = querySnapshot.val()
-            for (var id in snapshot) {
+            for (let id in snapshot) {
                 let item = snapshot[id]
                 item.id = id
                 rooms.push(item)
@@ -439,7 +436,7 @@ export const fetchSimulationCoordinates = () => async dispatch => {
         }
     })
         .then((res) => {
-            let fullTrace = res.data.hits.hits
+                let fullTrace = res.data.hits.hits
             if (fullTrace.length > 0) {
                 dispatch({
                     type: FETCH_SIMULATION_COORDINATES,
@@ -739,25 +736,27 @@ export const removeListenerSpecificHeartrateVitals = (uuid) => async dispatch =>
     heartrateRef.child(uuid).off()
 }
 
-export const fetchDashboardPatients = () => async dispatch => {
+export const fetchDashboardPatients = (t1, t2) => async dispatch => {
+    // console.log (t1.valueOf(),t2.valueOf())
     const query = {
-        "size": 0,
+        "size": 1,
+        "query": {
+            "exists": {
+              "field": "spo2"
+            }
+        }, 
         "aggs": {
-            "filter_1": {
+            "agg_id": {
                 "terms": {
                     "field": "gattid.keyword",
-                    "size": 500,
-                    "order": {
-                        "_term": "asc"
-                    }
+                    "size": 150
                 },
                 "aggs": {
-                    "filter_2": {
+                    "agg_latest": {
                         "top_hits": {
                             "_source": [
                                 "gattid",
                                 "@timestamp",
-                                "anchorId",
                                 "heart_rate",
                                 "spo2"
                             ],
@@ -770,28 +769,108 @@ export const fetchDashboardPatients = () => async dispatch => {
                                 }
                             ]
                         }
+                    },
+                    "agg_period": {
+                        "date_range": {
+                            "field": "@timestamp",
+                            "format": "epoch_millis",
+                            "ranges": [
+                                {
+                                    "from": t1.valueOf(),
+                                    "to": t2.valueOf()
+                                }
+                            ]
+                        },
+                        "aggs": {
+                            "agg_latest": {
+                                "top_hits": {
+                                    "_source": [
+                                        "@timestamp",
+                                        "heart_rate",
+                                        "spo2"
+                                    ],
+                                    "size": 1,
+                                    "sort": [
+                                        {
+                                            "@timestamp": {
+                                                "order": "desc"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "agg_period_prev": {
+                        "date_range": {
+                            "field": "@timestamp",
+                            "format": "epoch_millis",
+                            "ranges": [
+                                {
+                                    "to": t2.valueOf()
+                                }
+                            ]
+                        },
+                        "aggs": {
+                            "agg_latest": {
+                                "top_hits": {
+                                    "_source": [
+                                        "@timestamp",
+                                        "heart_rate",
+                                        "spo2"
+                                    ],
+                                    "size": 1,
+                                    "sort": [
+                                        {
+                                            "@timestamp": {
+                                                "order": "desc"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
-    axios.get(`/zmq/vitals/_search?scroll=1m`, {
-        params: {
-            source: JSON.stringify(query),
-            source_content_type: 'application/json'
+    // const query = {
+    //     "match_all": {}
+    // }
+
+    // axios.get(`vitals/_search?scroll=1m`, {
+    //     params: {
+    //         source: JSON.stringify(query),
+    //         source_content_type: 'application/json'
+    //     }
+    // })
+    fetch("http://52.77.184.100:9200/vitals/_search?scroll=1m", {
+        method: "POST",
+        body: JSON.stringify(query),
+        mode: 'cors',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json'
         }
     })
-        .then((res) => {
-            const buckets = res.data.aggregations.filter_1.buckets.map(bucket => (
-                {
-                    id: bucket.filter_2.hits.hits[0]._source.gattid,
-                    timestamp : bucket.filter_2.hits.hits[0]._source["@timestamp"],
-                    achorId: bucket.filter_2.hits.hits[0]._source.anchorId ? bucket.filter_2.hits.hits[0]._source.anchorId : "",
-                    heart_rate: bucket.filter_2.hits.hits[0]._source.heart_rate,
-                    spo2: bucket.filter_2.hits.hits[0]._source.spo2
-                }
-            ))
+        .then(res => res.json())
+        .then(data => {
+            console.log(data.aggregations.agg_id.buckets)
+            const buckets = data.aggregations.agg_id.buckets.map(bucket => {
+                const latest = bucket.agg_latest.hits.hits[0]
+                const period = bucket.agg_period.buckets[0].agg_latest.hits.hits[0]
+                const prev = bucket.agg_period_prev.buckets[0].agg_latest.hits.hits[0]
+                return (
+                    {
+                        id: latest._source.gattid,
+                        heart_rate: period ? period._source.heart_rate : prev ? prev._source.heart_rate : null,
+                        spo2: period ? period._source.spo2 : prev ? prev._source.spo2 : null,
+                        period : period ? true : false
+                    }
+                )
+            })
 
             if (buckets.length > 0) {
                 dispatch({
@@ -800,8 +879,13 @@ export const fetchDashboardPatients = () => async dispatch => {
                 });
             }
         })
-
-}
+        .catch(error => {
+            console.error(
+                "There has been a problem with your fetch operation:",
+                error
+            );
+        });
+    }
 
 export const fetchDashboardPatients2 = () => async dispatch => {
     const data = template["hits"]["hits"]
