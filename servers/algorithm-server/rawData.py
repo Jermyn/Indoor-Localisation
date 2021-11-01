@@ -74,7 +74,7 @@ with open('../config.json', 'r') as f:
 # zmq
 rawData = zmq.Context().socket(zmq.PULL)
 rawData.setsockopt(zmq.SNDHWM, 10000)
-rawData.bind(config['zmqSockets']['rawRSSI']['pushpull'])
+rawData.bind(config['zmqSockets']['sms']['pushpull'])
 
 # state
 edges = defaultdict(lambda: {})
@@ -92,13 +92,15 @@ def subscribe (xss):
   for x in xss:
     if all(k in x for k in ['gattid', 'anchorId']):
       x['updatedAt'] = now
-      if x['gattid'] in edges:
+      if x['gattid'] in edges and x['anchorId'] in edges[x['gattid']]:
         # update
-        edges[x['gattid']].update(x)
+        edges[x['gattid']][x['anchorId']].update(x)
       else:
         # create
         x['createdAt'] = now
-        edges[x['gattid']].update(x)
+        edges[x['gattid']].update({
+          x['anchorId']: x
+        })
 
   # expire edges
   # rms = []

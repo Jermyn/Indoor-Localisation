@@ -18,6 +18,7 @@ import pdb
 import collections
 import operator
 import copy
+import sys
 
 pp = PrettyPrinter(indent=2)
 
@@ -48,7 +49,7 @@ notify.connect(config['zmqSockets']['broker']['xsub'])
 cache_loc         = getLocation()
 cache_anchors = getAnchors()
 cache_MP = getMeasuredPower()
-# print (cache_MP)
+# print (cache_anchors)
 history       = defaultdict(lambda: {})
 neighbors = defaultdict(lambda: {})
 filters = {}
@@ -84,7 +85,12 @@ def convertDevice(receiverId):
   # print (receiverId)
   # print (cache_anchors[receiverId])
   return cache_anchors[receiverId]['device']['id']
-  
+
+def convertFromMAC(receiverId):
+  for anchor, data in cache_anchors.items():
+    if data['device']['id'] == receiverId:
+      return anchor
+  return False
 
 def augmentGraph(edges, interval):
   global history
@@ -195,7 +201,6 @@ def transmitterGraph(edges):
 def calculateLocation(n, nbrsInfo):
   nbrs  = list(nbrsInfo.keys())
   nbrs_rssi = list(nbrsInfo.values())
-  # print (n, nbrs, nbrsInfo)
   # for info in range(0, len(nbrs)):
   #   print (nbrs[info], nbrs_rssi[info]['rssi'])
   # print ("------------------------------------")
@@ -208,6 +213,7 @@ def calculateLocation(n, nbrsInfo):
     nbrs,
     nbrsInfo
   )
+  # print (pos)
   return {
     'map': _map,
     'latLng': pos,
@@ -312,6 +318,9 @@ def updateLocations(locations, delta):
   updates = set()
   for deviceId, location in locations.items():
     _map = location['map']
+    # if deviceId in history:
+    #   if distance(location['latLng'], history[deviceId]['location']['latLng'], _map['scale']) > 0.1:
+    #     print (distance(location['latLng'], history[deviceId]['location']['latLng'], _map['scale']))
      # create if not exist
     if (deviceId not in history) or \
     (deviceId in history and \
@@ -329,87 +338,97 @@ def updateLocations(locations, delta):
     })
   return updates
 
-def filterRSSI(edges):
+def filterRSSI(edges, alpha):
+  f = {}
   for beaconid, data in edges.items():
-    try:
-      if filters[beaconid] == None:
-        filters[beaconid] = {
-          'mu': data['rssi'],
+    for anchorid, rssiData in edges[beaconid].items():
+      # print (anchorid, rssiData)
+      if beaconid not in filters:
+        filters[beaconid] = { anchorid: {
+          'mu': rssiData['rssi'],
           'sigma': 1000,
-          'lastUpdate': data['time'],
+          'lastUpdate': rssiData['time'],
           'period': 1000,
           'alpha': 0.05,
           'beaconid': beaconid,
-          'receiverId': data['anchorId']
+          'receiverId': anchorid
+        }}
+      elif beaconid in filters and anchorid not in filters[beaconid]: 
+        filters[beaconid][anchorid] = { 
+          'mu': rssiData['rssi'],
+          'sigma': 1000,
+          'lastUpdate': rssiData['time'],
+          'period': 1000,
+          'alpha': 0.05,
+          'beaconid': beaconid,
+          'receiverId': anchorid
         }
       else: 
-        filters[beaconid]['receiverId'] = data['anchorId']
-    except KeyError:
-      filters[beaconid] = {
-          'mu': data['rssi'],
-          'sigma': 1000,
-          'lastUpdate': data['time'],
-          'period': 1000,
-          'alpha': 0.05,
-          'beaconid': beaconid,
-          'receiverId': data['anchorId']
-        }
-    f = filters[beaconid]
-    #mean, variance calculation
-    diff = data['rssi'] - f['mu']
-    incr = f['alpha'] * diff
-    f['mu'] += incr
-    f['sigma'] = (1-f['alpha']) * (f['sigma']+(diff *incr))
-    #period calculation
-    diff = data['time'] - f['lastUpdate'] - f['period']
-    incr = 0.01*diff
-    f['period'] += incr
-    f['lastUpdate'] = data['time']
-    #adapt alpha
-    if f['period'] >1000:
-      f['alpha']=0.2
-    else:
-      f['alpha'] = (f['period']*0.0001667) + 0.0333
+        f = copy.deepcopy(filters[beaconid][anchorid])
+        #mean, variance calculation
+        diff = rssiData['rssi'] - f['mu']
+        incr = f['alpha'] * diff
+        f['mu'] += incr
+        f['sigma'] = (1-f['alpha']) * (f['sigma']+(diff *incr))
+        #period calculation
+        diff = rssiData['time'] - f['lastUpdate'] - f['period']
+        incr = 0.01*diff
+        f['period'] += incr
+        f['lastUpdate'] = rssiData['time']
+        #adapt alpha
+        if f['period'] >1000:
+          f['alpha']= 0.2
+        else:
+          f['alpha'] = (f['period']*0.0001667) + 0.0333
+  #       print (f)
+        filters[beaconid][anchorid].update({
+          'mu': f['mu'],
+          'sigma': f['sigma'],
+          'period': f['period'],
+          'lastUpdate': f['lastUpdate']   
+          })
+  # print (filters['b2']['b827eb0827cf'], filters['b2']['b827ebc26413'])
   return filters
 
 def arrangeEdges(filters):
   for key, data in filters.items():
-    filtered_edges = {
-      'transmitterId': key,
-      'receiverId': data['receiverId'],
-      'mu': filters[key]['mu'],
-      'sigma': filters[key]['sigma'],
-      'period': filters[key]['period']
-    }
-    receiverId = data['receiverId']
-    # print (filtered_edges)
-    # update
-    if key in final_edges and receiverId in final_edges[key]:
-      final_edges[key][receiverId].update(filtered_edges)
-    else:
-      # create
-      final_edges[key].update({
-              receiverId: filtered_edges
-            })
+    for anchor, beacondata in filters[key].items():
+      filtered_edges = {
+        'transmitterId': key,
+        'receiverId': beacondata['receiverId'],
+        'mu': beacondata['mu'],
+        'sigma': beacondata['sigma'],
+        'period': beacondata['period']
+      }
+      receiverId = beacondata['receiverId']
+      # update
+      if key in final_edges and receiverId in final_edges[key]:
+        final_edges[key][receiverId].update(filtered_edges)
+      else:
+        # create
+        final_edges[key].update({
+                receiverId: filtered_edges
+              })
   return copy.deepcopy(final_edges)
 
-def processEdges(interval):
+def processEdges(interval, alpha):
   edges         = getEdges()
-  # print ("edges_original: ", edges)
+  # print ("edges_original: ", edges['b2']['b827eb0827cf']['rssi'], edges['b2']['b827ebc26413']['rssi'])
   try:
-    filters = filterRSSI(edges)
-    # print ("filtered..." , filters)
+    filters = filterRSSI(edges, alpha)
+    # print ("filtered..." , filters['b2']['b827eb0827cf']['mu'], filters['b2']['b827ebc26413']['mu'])
     new_edges = arrangeEdges(filters)
     # pdb.set_trace()
     # print ("final: ", new_edges)
     transmitters  = augmentGraph(new_edges, interval)
     # print ("transmitters........: ", transmitters['b6'].keys())
     now           = int(time.time() * 1000)
+    # print ("transmitters...: ", transmitters['b7'][convertFromMAC(sys.argv[2])]['rssi'], transmitters['b7'][convertFromMAC(sys.argv[2])]['distance'])
   except:
     raise
     
   # print (edges)
-  # print (transmitters['b2']['C12']['distance'])
+  # print (transmitters['b2'])
   # try:
     # print (transmitters['b2'])
     # print (transmitters['b2']['b827ebc26413']['rssi'])
@@ -421,7 +440,7 @@ def processEdges(interval):
   try:
     # locations = findNearestNeighbors(transmitters)
     locations     = transmitterLocations(transmitters)
-    updates       = updateLocations(locations, delta=1)
+    updates       = updateLocations(locations, delta=0)
     print ("updates..........: ", updates)
 
     for deviceId in updates:
@@ -456,6 +475,7 @@ def processEdges(interval):
       # print (message)
       # print ("Out of obstacle")
       print ("Sending Position Data...")
+      print(message)
       notify.send_multipart([topic.encode('utf-8'), message.encode('utf-8')])
   except:
     raise
@@ -474,10 +494,11 @@ def listenForCacheUpdates():
 
 def main():
   interval = 0.5
+  alpha = float(sys.argv[1])
   while True:
     time.sleep(interval)
     try:
-      processEdges(interval*1000)
+      processEdges(interval*1000, alpha)
     except:
       raise
 
