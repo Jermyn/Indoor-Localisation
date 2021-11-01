@@ -58,13 +58,17 @@ def processEdges(interval, startTime):
       print ("Average RSSI: %.2f" % (float("{0:.2f}".format(avgRSSI))))
       # avgRSSI.append(edges[sys.argv[2]][sys.argv[3]]['rssi'])##argument2:beaconId, argument3:anchorid
     else:
-      print ("MeasuredPower: %.2f" % (float("{0:.2f}".format(avgRSSI))))
+      # print ("MeasuredPower: %.2f" % (float("{0:.2f}".format(avgRSSI))))
+      # inputAnchorData(conn, sys.argv[3], float("{0:.2f}".format(avgRSSI)))
+      # fetchAnchorData(conn, sys.argv[3])
+      # conn.close()
+      # avgRSSI = None
+      # meanRSSI = mean(avgRSSI)
+      measuredPower = getMeasuredPower(avgRSSI, float(sys.argv[4]))##argument4: distance
+      print ("MeasuredPower: %.2f" % (float("{0:.2f}".format(measuredPower))))
       inputAnchorData(conn, sys.argv[3], float("{0:.2f}".format(avgRSSI)))
       fetchAnchorData(conn, sys.argv[3])
       conn.close()
-      # avgRSSI = None
-      # meanRSSI = mean(avgRSSI)
-      # measuredPower = getMeasuredPower(meanRSSI, float(sys.argv[4]))##argument4: distance
       # avgRSSI = []
       # print (measuredPower)
   except:

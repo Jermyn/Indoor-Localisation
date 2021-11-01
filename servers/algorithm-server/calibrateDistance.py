@@ -1,10 +1,13 @@
 ### arg 1: duration, arg 2: beaconid
-# from rawData import getEdges
+from listenRawData import getEdges
 import json
 import sys
 import zmq
+import copy
+import re
 from statistics import mean, pstdev
-from rssi import getMeasuredPower, getOffset, rssiToDistance
+from collections import defaultdict
+# from rssi import getMeasuredPower, getOffset, rssiToDistance
 import threading
 import time
 import csv, operator
@@ -25,47 +28,89 @@ devices = {}
 include_id = 0
 include_curr = 0
 mapname = 'actlab'
+result_dict = {}
+final_edges = defaultdict(lambda: {})
+rssi_result = []
+write_state = [0,0]
 
-# avgRSSIFile = open('avgRSSI_beaconCal1_Jermyn.csv', 'a')
-# avgRSSIFile.write("anchorID, TransmitterID, ")
-# for i in range(int(int(sys.argv[1])/500)): avgRSSIFile.write(str(i+1) + ", ")
+avgRSSIFile = open('calibrate_Anchors_Distance_2.csv', 'a')
+# avgRSSIFile.write("TransmitterID, AnchorID ")
+# for i in range(int(int(sys.argv[1])/1000)): avgRSSIFile.write(str(i+1) + ", ")
 # avgRSSIFile.write("Avg, Distance\n")
+
+def readFile(filename):
+  f = open(filename)
+  data = json.load(f)
+  f.close()
+  return data
+
+def convertDevice(receiverId):
+  res = defaultdict(lambda:{})
+  for key, val in enumerate(cache['anchors']):
+    res[val['id']].update(val)
+  return res[receiverId]['device']['id']
+
+def formatEdges(edges):
+  for t in edges:
+    for r in edges[t]:
+      edges[t][r] = {
+        'rssi': edges[t]['rssi']
+      }
+  return edges
+
+def arrangeEdges(edges, anchors):
+  for key, anchor in edges.items():
+    for key_anchor, data in edges[key].items():
+      # formatted_edges = {
+      #   'transmitterId': key,
+      #   'receiverId': data['anchorId'],
+      #   'rssi': data['rssi']
+      # }
+      receiverId = convertDevice(key_anchor)
+      final_edges[key][receiverId] = {
+        'transmitterId': key,
+        'receiverId': data['anchorId'],
+        'rssi': data['rssi']
+      }
+    # receiverId = data['anchorId']
+    # print (filtered_edges)
+    # update
+      # if key in final_edges and receiverId in final_edges[key]:
+      #   final_edges[key][receiverId].update(formatted_edges)
+      # else:
+      #   # create
+      #   final_edges[key].update({
+      #           receiverId: formatted_edges
+      #         })
+  return final_edges
 
 def determineDistance(transmitterPos, receiverPos, mapname):
   return math.sqrt((float(transmitterPos[0]) - float(receiverPos[0])) **2 + ((float(transmitterPos[1]) - float(receiverPos[1])) **2)) * getScale(mapname)
 
-def findNearbyAnchors(anchor, mapname):
-  transmitterPos = []
-  receiverPos = []
+def findNearbyAnchors(anchor, mapname, distances):
   sorted_devices = {}
   temp = {}
   tempDict = {}
-  # for anchor in anchorList:
-  for key, val in enumerate(cache['anchors']):
-    if cache['anchors'][key]['device']['location'] != 'null':
-      if cache['anchors'][key]['device']['location']['map']['id'] == mapname:
-        if cache['anchors'][key]['device']['id'] == anchor:
-          transmitterPos = [cache['anchors'][key]['device']['location']['lat'], cache['anchors'][key]['device']['location']['lng']]
-          break
-  for key, val in enumerate(cache['anchors']):
-    if cache['anchors'][key]['device']['location'] != 'null':
-      if cache['anchors'][key]['device']['location']['map']['id'] == mapname:
-        if cache['anchors'][key]['device']['id'] != anchor:
-          receiverPos = [cache['anchors'][key]['device']['location']['lat'], cache['anchors'][key]['device']['location']['lng']]
-          receiverId = cache['anchors'][key]['device']['id']
-          if determineDistance(transmitterPos, receiverPos, mapname) < 5:
-            try:
-              devices[anchor].update({receiverId: determineDistance(transmitterPos, receiverPos, mapname)})
-            except KeyError:
-              devices[anchor] = {
-                receiverId: determineDistance(transmitterPos, receiverPos, mapname)
-              }
+  for key, val in enumerate(distances):
+    if (val != anchor):
+      receiverId = val
+      if receiverId in distances[anchor]:
+        if distances[anchor][receiverId] < 6:
+          try:
+            devices[anchor].update({receiverId: distances[anchor][receiverId]})
+          except KeyError:
+            devices[anchor] = {
+              receiverId: distances[anchor][receiverId]
+            }
   temp = dict(sorted(devices[anchor].items(), key=lambda item: item[1]))
-  temp_items = temp.items()
-  try:
-    tempDict[anchor].update(dict(list(temp_items)[:2]))
-  except KeyError:
-    tempDict[anchor] = dict(list(temp_items)[:2])
+  temp_items = list(temp.items())
+  for item in temp_items[:2]:
+    try:
+      tempDict[anchor].update(dict({item[0]: { 'distance': item[1] }}))
+    except KeyError:
+      tempDict[anchor] = {
+        item[0]: { 'distance': item[1] }
+      }
   return tempDict
 
 def storeAllDevices(mapname):
@@ -76,60 +121,83 @@ def storeAllDevices(mapname):
         devList.append(cache['anchors'][key]['device']['id'])
   return devList
 
-def processEdges(interval, startTime, dev, beaconDev):
-  global avgRSSI
+def writeToFile(beacon, anchor, rssiList, avgRSSIFile, meanRSSI, distance):
+  avgRSSIFile.write(str(beacon) + ", " + str(anchor) + ", ")
+  for i in rssiList:
+    avgRSSIFile.write(str(i) + ", ")
+  avgRSSIFile.write(str(meanRSSI) + ", " + str(distance) + "\n")
+
+def appendRSSIList(rssi, anchorDict):
+  if 'raw-rssi' in anchorDict:
+    anchorDict['raw-rssi'].append(rssi)
+  else:
+    anchorDict['raw-rssi'] = [rssi]
+
+def processEdges(interval, startTime, beacon, anchorData, beaconID):
+  global avgRSSI, result_dict
   i = 0
   edges         = getEdges()
-  print (edges)
+  anchors = list(anchorData.keys())
+  transmitters = arrangeEdges(edges, anchors)
+  # print (transmitters['b12']['rpi9'])
   now           = int(time.time() * 1000)
   progress = int(((now-startTime)/int(sys.argv[1]))*100)
   try:
     if (now - startTime) < int(sys.argv[1]):##argument1:duration
-      # avgRSSI += edges[sys.argv[2]][dev]['rssi']
-      
+      # avgRSSI += transmitters[beacon][anchors[0]]['rssi']
       ###################### anchor calibration version ##############################################
-      avgRSSI.append(edges[beaconDev][sys.argv[2]]['rssi'])##argument2:beaconId, argument3:anchorid
-      avgRSSIFile.write(str(edges[beaconDev][sys.argv[2]]['rssi']) + ", ")
-      print ("RSSI: %.2f" % (float("{0:.2f}".format(edges[beaconDev][sys.argv[2]]['rssi'])))) 
+      temp_rssi_1 = transmitters[beaconID][anchors[0]]['rssi']
+      temp_rssi_2 = transmitters[beaconID][anchors[1]]['rssi']
+      appendRSSIList(temp_rssi_1, result_dict[beacon][anchors[0]])
+      appendRSSIList(temp_rssi_2, result_dict[beacon][anchors[1]])
+      print ("RSSI of " + str(anchors[0] + ": %.2f" % (float("{0:.2f}".format(temp_rssi_1)))))
+      print ("RSSI of " + str(anchors[1] + ": %.2f" % (float("{0:.2f}".format(temp_rssi_2)))))
     else:
-      meanRSSI = mean(avgRSSI)
-      avgRSSIFile.write(str(meanRSSI) + ", " + str(dev[1]) + "\n")
-      print ("Average RSSI: %.2f" % (float("{0:.2f}".format(meanRSSI))))
+      meanRSSI_1 = mean(result_dict[beacon][anchors[0]]['raw-rssi'])
+      meanRSSI_2 = mean(result_dict[beacon][anchors[1]]['raw-rssi'])
+      writeToFile(beacon, anchors[0], result_dict[beacon][anchors[0]]['raw-rssi'], avgRSSIFile, meanRSSI_1, result_dict[beacon][anchors[0]]['distance'])
+      writeToFile(beacon, anchors[1], result_dict[beacon][anchors[1]]['raw-rssi'], avgRSSIFile, meanRSSI_2, result_dict[beacon][anchors[1]]['distance'])
+      print ("Average RSSI: %.2f" % (float("{0:.2f}".format(meanRSSI_1))))
+      print ("Average RSSI: %.2f" % (float("{0:.2f}".format(meanRSSI_2))))
       # measuredPower = getMeasuredPower(meanRSSI, float(sys.argv[4]))##argument4: distance
-      avgRSSI = []
+      # avgRSSI = []
   except:
-    pass
+    raise
   return progress
 
 ###################### anchor calibration version ##############################################
-def main(anchor, anchorData):
-  interval = 0.5
+def main(beacon, anchorData, beaconID):
+  interval = 1
   progress = 0
   startTime = int(time.time()*1000)
-  # avgRSSIFile.write(str(anchor) + ", ")
+  # print ("result_dict", result_dict)
+  # avgRSSIFile.write(str(beacon) + ", ")
   # avgRSSIFile.write(str(devices[devIndex][0]) + ", ")
+  # for curr_anchor, data in anchorData.items(): #beacon is the anchor set as beacon, curr_anchor is current anchor receiving from beacon
   while progress < 100:
     time.sleep(interval)
     try:
-      if devIndex == 0:
-        progress = processEdges(interval*1000, startTime, devices[devIndex], devList[devIndex])
-        print (progress)
-      else:
-        progress = 0
-        progress = processEdges(interval*1000, startTime, devices[devIndex], devList[devIndex])
-        print (progress)
+      progress = processEdges(interval*1000, startTime, beacon, anchorData, beaconID)
+      print (progress)
     except:
       raise
 
 ###################### anchor calibration version ##############################################
-def runMainAVers(sorted_devices):
+def runMainAVers(sorted_devices, beaconID):
+  global result_dict
+  result_dict = copy.deepcopy(sorted_devices)
   for curr_dev, value in sorted_devices.items():
-    main(curr_dev, value)
+    print (curr_dev, value)
+    main(curr_dev, value, beaconID)
     # else:
     #   if input("Enter the enter key to start the next device...") == '':
     #     main(index_currDev)
 # runMainAVers()
+temp = re.findall(r'\d+', sys.argv[2])
+res = list(map(int, temp))
+beaconID = 'b' + str(res[0])
+distances = readFile("distances.json")
 anchorList = storeAllDevices(mapname)
-sorted_devices = findNearbyAnchors(sys.argv[2], mapname)
-# runMainAVers(sorted_devices)
-print (sorted_devices)
+sorted_devices = findNearbyAnchors(sys.argv[2], mapname, distances)
+runMainAVers(sorted_devices, beaconID)
+# print (sorted_devices)
