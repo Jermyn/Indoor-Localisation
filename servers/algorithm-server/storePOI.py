@@ -4,6 +4,16 @@ from collections import defaultdict
 
 str_deviceID = []
 
+def getNavMesh(location):
+	query_mesh = 'query{ map (id: "{location}") {navMesh}}'
+	r = requests.get("http://52.77.184.100:3000/graphql", {"query":query_mesh})
+	mesh = r.text
+	mesh_json = json.loads(mesh)
+	for key, val in enumerate(mesh_json['data']['navMesh']):
+		res[val['id']].update(val)
+	return res
+getNavMesh('E4-08 Floorplan')
+
 def getPOI(location):
 	if location == 'actlab_test':
 		query_poi = 'query{map (id:"actlab_test") {pois}}'

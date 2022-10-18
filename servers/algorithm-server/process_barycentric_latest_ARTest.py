@@ -9,14 +9,11 @@ from barycentric import barycentric
 from rssi import rssiToDistance, rssiToDistanceVariance
 # from cache import getCache
 from rawData import getEdges
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
 # from vitals import getEdges
 # from detectPoorVitals import sendRawRSSIPackets
 # from aggregate import getEdges
 from pprint import PrettyPrinter
 from storeScale import getMeasuredPower, getLocation, getAnchors
-# from storePOI import getNavMesh, getPOI
 import pdb
 import collections
 import operator
@@ -252,13 +249,6 @@ def calculateLocationUsingNeighbors(n, nbrsInfo):
   
 
 def transmitterLocations(transmitters):
-  # for t, info in transmitters.items():
-  #   try:
-  #     print (t)
-  #     print (cache_loc[t])
-  #   except KeyError: 
-  #     print ("error")
-  #     print (cache_loc[t])
   return { t: calculateLocation(t, info) \
     for t, info in transmitters.items() \
     if cache_loc[t]['type'] == 'mobile' and info}
@@ -287,8 +277,8 @@ def findNearestNeighbors(transmitters):
 
 
 def distance(a, b, scale):
-  # print (scale)
-  # print (scale * np.linalg.norm(a - b))
+  print (scale)
+  print (scale * np.linalg.norm(a - b))
   return scale * np.linalg.norm(a - b)
 
 def checkDistances(distances, delta):
@@ -297,75 +287,41 @@ def checkDistances(distances, delta):
       return False
     else: return True
 
-def findMinimum_Distance_Point(min_poly_points, point):
-  i=0
-  minimum_dist = 999
-  tmp_dist = 0
-  tmp_coord = []
-  while i<len(min_poly_points):
-    # print (min_poly_points[i])
-    tmp_dist = point.distance(Point(min_poly_points[i]))
-    if tmp_dist < minimum_dist:
-      minimum_dist = tmp_dist
-      tmp_coord = min_poly_points[i]
-    i+=1
-  return tmp_coord
-
-def findDiagonalPoint(min_poly, point):
-  min_poly_points = list(min_poly.exterior.coords)
-  return findMinimum_Distance_Point(min_poly_points, point)
-
-def findWherePointIs(min_poly, point):
-  boundingCoords = min_poly.bounds
-  if (point.y >= boundingCoords[1] and point.y <= boundingCoords[3]): #either left or right of polygon
-    return 'horizontal'
-  elif (point.x >= boundingCoords[0] and point.x <= boundingCoords[2]): #either top or bottom of polygon
-    return 'vertical'
-  else: #diagonally away from the polygon
-    return 'diagonal'
-
-def checkBoundary(lng, lat, cache_mesh):
+def checkBoundary(lng, lat):
+  global cache
   i = 0
   contains = []
-  point = Point(lng, lat)
-  while i< len(cache_mesh['map']['navMesh']['features']):
-    pt1 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][0]
-    pt2 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][1]
-    pt3 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][2]
-    pt4 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][3]
-    polygon = Polygon([pt1, pt2, pt3, pt4])
-    contains.append(polygon.contains(point))
+  while i< len(cache['maps']['actlab']['navMesh']['features']):
+    pt1 = cache['maps']['mini_actlab']['navMesh']['features'][i]['geometry']['coordinates'][0][0]
+    pt2 = cache['maps']['mini_actlab']['navMesh']['features'][i]['geometry']['coordinates'][0][1]
+    pt3 = cache['maps']['mini_actlab']['navMesh']['features'][i]['geometry']['coordinates'][0][2]
+    pt4 = cache['maps']['mini_actlab']['navMesh']['features'][i]['geometry']['coordinates'][0][3]
+    minXpt = min(pt1[0], pt2[0], pt3[0], pt4[0])
+    maxXpt = max(pt1[0], pt2[0], pt3[0], pt4[0])
+    minYpt = min(pt1[1], pt2[1], pt3[1], pt4[1])
+    maxYpt = max(pt1[1], pt2[1], pt3[1], pt4[1])
     i+=1
-  return contains, point
+    contains.append(((lng > minXpt and lng < maxXpt) and (lat > minYpt and lat < maxYpt)))
+  return contains
 
-def shiftPtToSide(point, deviceId, cache_mesh):
-  global history
-  i = 0
-  polys = []
-  while i< len(cache_mesh['map']['navMesh']['features']):
-    pt1 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][0]
-    pt2 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][1]
-    pt3 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][2]
-    pt4 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][3]
-    polys.append(Polygon([pt1, pt2, pt3, pt4]))
-    i+=1
-  min_poly = min(polys, key=point.distance)
-  # print (min_poly, min_poly.bounds, list(min_poly.exterior.coords))
-  point_orientation = findWherePointIs(min_poly, point)
-  print (point_orientation)
-  try:
-    if polys.index(min_poly) == history[deviceId]['polygon']: #prev pos is in the same polygon
-      if point_orientation == 'horizontal':
-        return [history[deviceId]['location']['lng'], point.y]
-      elif point_orientation == 'vertical':
-        return [point.x , history[deviceId]['location']['lat']]
-      else:
-        return findDiagonalPoint(min_poly, point)
-    else: #first point to be in polygon
-      history[deviceId]['polygon'] = polys.index(min_poly)
-      return findDiagonalPoint(min_poly, point)
-  except KeyError:
-    return [point.x, point.y]
+def shiftPtToSide(obstacleNum, lng, lat):
+  global cache
+  pt1 = cache['maps']['mini_actlab']['navMesh']['features'][obstacleNum]['geometry']['coordinates'][0][0]
+  pt2 = cache['maps']['mini_actlab']['navMesh']['features'][obstacleNum]['geometry']['coordinates'][0][1]
+  pt3 = cache['maps']['mini_actlab']['navMesh']['features'][obstacleNum]['geometry']['coordinates'][0][2]
+  pt4 = cache['maps']['mini_actlab']['navMesh']['features'][obstacleNum]['geometry']['coordinates'][0][3]
+  dist1 = math.sqrt((lng - pt1[0])**2 + (lat - pt1[1])**2)
+  dist2 = math.sqrt((lng - pt2[0])**2 + (lat - pt2[1])**2)
+  dist3 = math.sqrt((lng - pt3[0])**2 + (lat - pt3[1])**2)
+  dist4 = math.sqrt((lng - pt4[0])**2 + (lat - pt4[1])**2)
+  if dist1 == min(dist1, dist2, dist3, dist4):
+    return [lng, pt1[1]]
+  elif dist2 == min(dist1, dist2, dist3, dist4):
+    return [lng, pt2[1]]
+  elif dist3 == min(dist1, dist2, dist3, dist4):
+    return [lng, pt3[1]]
+  else:
+    return [lng, pt4[1]]
 
 def updateLocations(locations, transmitters, AR_delta, delta):
   global history
@@ -373,52 +329,29 @@ def updateLocations(locations, transmitters, AR_delta, delta):
   distances = set()
   for anchor, anchorData in transmitters['b1'].items():
     distances.add(anchorData["distance"])
-  print (distances)
   for deviceId, location in locations.items():
     _map = location['map']
-    cache_mesh = getNavMesh(_map['id'])
     # if deviceId in history:
     #   if distance(location['latLng'], history[deviceId]['location']['latLng'], _map['scale']) > 0.1:
     #     print (distance(location['latLng'], history[deviceId]['location']['latLng'], _map['scale']))
      # create if not exist
     if (deviceId not in history) or \
     (deviceId in history and \
-    (deviceId == 'b1') and \
     checkDistances(distances, AR_delta) and \
     distance(location['latLng'], history[deviceId]['location']['latLng'], _map['scale']) > delta):
+    # distance(location['latLng'], history[deviceId]['location']['latLng'], _map['scale']) > delta):
       # if True not in checkBoundary(location['latLng']):
       updates.add(deviceId)
-    if (deviceId not in history) or \
-    (deviceId in history and \
-    # (deviceId != 'b1') and \
-    distance(location['latLng'], history[deviceId]['location']['latLng'], _map['scale']) > delta):
-      updates.add(deviceId)
-    inObstacle, pos = checkBoundary(location['lng'], location['lat'], cache_mesh)
-    print (inObstacle)
-    if True not in inObstacle:
-      shiftedPos = shiftPtToSide(pos, deviceId, cache_mesh)
-      history[deviceId].update({
-          'location': {
-            'map': _map,
-            'latLng': shiftedPos,
-            'lat': shiftedPos[1],
-            'lng': shiftedPos[0]
-          },
-          'inPolygon': False,
-          # 'direction': direction
-      })
-    else:
-      # update history
-      history[deviceId].update({
-        'location': {
-          'map': _map,
-          'latLng': location['latLng'],
-          'lat': location['lat'],
-          'lng': location['lng']
-        },
-        'inPolygon': True,
-        'polygon': inObstacle.index(True)
-      })
+    elif (deviceId in history and checkDistances(distances,delta) == False): break
+    # update history
+    history[deviceId].update({
+      'location': {
+        'map': _map,
+        'latLng': location['latLng'],
+        'lat': location['lat'],
+        'lng': location['lng']
+      }
+    })
   return updates
 
 def filterRSSI(edges, alpha):
@@ -510,7 +443,7 @@ def processEdges(interval, alpha):
   except:
     raise
     
-  print (edges)
+  # print (edges)
   # print (transmitters['b2'])
   # try:
     # print (transmitters['b2'])
@@ -523,10 +456,28 @@ def processEdges(interval, alpha):
   try:
     # locations = findNearestNeighbors(transmitters)
     locations     = transmitterLocations(transmitters)
-    updates       = updateLocations(locations, transmitters, AR_delta=1.5, delta=0)
+    updates       = updateLocations(locations, transmitters, AR_delta=2.5, delta=0)
     print ("updates..........: ", updates)
 
     for deviceId in updates:
+      # print (history[deviceId])
+      # print (deviceId)
+      # inObstacle = checkBoundary(history[deviceId]['location']['lng'], history[deviceId]['location']['lat'])
+      # if True in inObstacle:
+      #   shiftedPos = shiftPtToSide(inObstacle.index(True), history[deviceId]['location']['lng'], history[deviceId]['location']['lat'])
+      #   topic = config['notifications']['positionUpdate']
+      #   message = json.dumps({
+      #     'id':     deviceId,
+      #     'lng':    shiftedPos[0],
+      #     'lat':    shiftedPos[1], 
+      #     'map':    history[deviceId]['location']['map'],
+      #     # 'distance': history[deviceId]['distance'],
+      #     'time':   now
+      #   })
+      #   print ("In obstacle")
+      #   # print (message)
+      #   notify.send_multipart([topic.encode('utf-8'), message.encode('utf-8')])
+      # else:
       topic = config['notifications']['positionUpdate']
       message = json.dumps({
         'id':     deviceId,
@@ -537,9 +488,10 @@ def processEdges(interval, alpha):
         # 'distance': history[deviceId]['distance'],
         'time':   now
       })
-      print (message)
+      # print (message)
       # print ("Out of obstacle")
       print ("Sending Position Data...")
+      print(message)
       notify.send_multipart([topic.encode('utf-8'), message.encode('utf-8')])
   except:
     raise
