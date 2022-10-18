@@ -79,7 +79,8 @@ getCache = function() {
     });
     cache.version = cacheVersion;
     console.log("loaded cache version", cache.version);
-    return console.log(stringifyJSON(cache));
+    return console.log("cache updated!")
+    // return console.log(stringifyJSON(cache));
   });
 };
 
@@ -245,13 +246,13 @@ xpub = zmq.socket('xpub').bind(config.zmqSockets.broker.xpub);
 xsub = zmq.socket('xsub').bind(config.zmqSockets.broker.xsub);
 
 xsub.on('message', function(topic, message) { //xpub will send to logstash when xsub receive something
-  console.log("xsub: ", topic.toString(), parseJSON(message))
+  console.log(topic.toString(), parseJSON(message))
   return xpub.send([topic, message]);
 });
 
 xpub.on('message', xsub.send.bind(xsub));
 
-rrBroker = new RRBroker({
+rrBroker = new RRBroker({ //broker is for responder
   router: config.zmqSockets.broker.router,
   dealer: config.zmqSockets.broker.dealer
 });
@@ -268,11 +269,11 @@ notifyCache$ = Rx.Observable.timer(2000, 60000);
 notifications$ = Rx.Observable.fromEvent(notifications, 'message', function(topic, message) {
   return [topic.toString(), parseJSON(message)];
 });
-anchorStatus$ = notifications$.filter(function([topic, message]) {
-  var ref;
-  return topic === config.notifications.anchorStatus && ((ref = cache.anchor) != null ? ref[message != null ? message.anchorId : void 0] : void 0);
+anchorStatus$ = notifications$.filter(function([topic, message]) { //triggered by anchors
+  var ref;    
+  return topic === config.notifications.anchorStatus && ((ref = cache.anchors) != null ? ref[message != null ? message.anchorId : void 0] : void 0);
 });
-databaseUpdate$ = notifications$.filter(function([topic, message]) {
+databaseUpdate$ = notifications$.filter(function([topic, message]) { //triggered by api-server when database changes
   return topic === config.notifications.databaseUpdate;
 });
 responder$ = Rx.Observable.fromEvent(responder, 'message', function(topic, message) {
@@ -298,7 +299,14 @@ databaseUpdate$.subscribe(function([topic, message]) {
   return notifyCacheUpdate();
 });
 anchorStatus$.subscribe(function([topic, message]) {
-  return updateAnchorStatus(message);
+  try {
+    return console.log("Sending anchor status of " + message.hostname.replace("\n", "") + "...")
+  }
+  catch (error) { 
+    console.log(error)
+    return console.log("Sending anchor status of " + message.anchorId.replace("\n", "") + "...")
+  // return updateAnchorStatus(message);
+  }
 });
 responder$.subscribe(function([topic, message]) {
   var anchorId, data, rssi, type, uuid;
