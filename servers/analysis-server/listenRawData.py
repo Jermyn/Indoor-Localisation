@@ -14,7 +14,7 @@ with open('../config.json', 'r') as f:
 
 # zmq
 beaconData = zmq.Context().socket(zmq.PULL)
-beaconData.setsockopt(zmq.SNDHWM, 10000)
+# beaconData.setsockopt(zmq.SNDHWM, 10000)
 beaconData.bind(config['zmqSockets']['sms']['pushpull'])
 
 # while True:
@@ -28,6 +28,7 @@ beaconData.bind(config['zmqSockets']['sms']['pushpull'])
 
 # state
 edges = defaultdict(lambda: {})
+# while True: print (beaconData.recv_json())
 
 def beaconObservable (observer):
   while True:

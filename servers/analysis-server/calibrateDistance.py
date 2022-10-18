@@ -1,4 +1,4 @@
-### arg 1: duration, arg 2: beaconid
+### arg 1: duration, arg 5: beaconid
 from listenRawData import getEdges
 import json
 import sys
@@ -12,6 +12,7 @@ import threading
 import time
 import csv, operator
 import math
+import pprint 
 from storeScale import getScale
 from cache_local import getCache
 
@@ -45,9 +46,14 @@ def readFile(filename):
   return data
 
 def convertDevice(receiverId):
+  # print(receiverId)
   res = defaultdict(lambda:{})
+  #pprint.pprint(cache['anchors'])
+  
   for key, val in enumerate(cache['anchors']):
     res[val['id']].update(val)
+   # pprint.pprint(res[val['id']])
+   # pprint.pprint(res[receiverId])
   return res[receiverId]['device']['id']
 
 def formatEdges(edges):
@@ -104,10 +110,15 @@ def findNearbyAnchors(anchor, mapname, distances):
   tempDict = {}
   transmitterPos = []
   receiverPos = []
+  #print(distances)
   for key, val in enumerate(distances):
     if (val != anchor):
+      # print(val)
+      # print(anchor)
+      # print(distances[anchor])
       receiverId = val
       if receiverId in distances[anchor]:
+      
       #   for anchorKey, anchorVal in enumerate(cache['anchors']):
       #     if anchorVal["device"]["id"] == anchor:
       #       transmitterPos =  [anchorVal["device"]["location"]["lat"], anchorVal["device"]["location"]["lng"]]
@@ -161,7 +172,8 @@ def processEdges(interval, startTime, beacon, anchorData, beaconID):
   edges         = getEdges()
   anchors = list(anchorData.keys())
   transmitters = arrangeEdges(edges, anchors)
-  # print (transmitters['b12']['rpi9'])
+  # print (anchors)
+  # print (transmitters)
   now           = int(time.time() * 1000)
   progress = int(((now-startTime)/int(sys.argv[1]))*100)
   try:
@@ -186,12 +198,12 @@ def processEdges(interval, startTime, beacon, anchorData, beaconID):
       # measuredPower = getMeasuredPower(meanRSSI, float(sys.argv[4]))##argument4: distance
       # avgRSSI = []
   except:
-    raise
+    pass
   return progress
 
 ###################### anchor calibration version ##############################################
 def main(beacon, anchorData, beaconID):
-  interval = 1
+  interval = 0.5
   progress = 0
   startTime = int(time.time()*1000)
   # print ("result_dict", result_dict)

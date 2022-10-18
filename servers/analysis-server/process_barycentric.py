@@ -132,11 +132,13 @@ def augmentGraph(edges, interval):
       try:
         # pdb.set_trace()
         # measuredPower = -63.0
+        # if r == 'b827eb0827cf': continue
         rssi          = float(edges[t][r]['mu'])
         sigma         = float(edges[t][r]['sigma'])
         period        = float(edges[t][r]['period'])
         i=0
         # print (cache['navMesh'][0]['geometry']['coordinates'])
+        # print (t,r)
         while i< len(cache['anchors']):
           # print(cache['anchors'][i]['id'])
           # pdb.set_trace()
@@ -144,25 +146,26 @@ def augmentGraph(edges, interval):
             if cache['anchors'][i]['device']['location']['map']['id'] == 'actlab':
               # if r != 'Bed4':
               # print (cache['anchors'][i]['device']['id'], r)
-              if(cache['anchors'][i]['id']==r):
-                dev = cache['anchors'][i]['device']['id']
-                # print (cache['anchors'][i]['device']['id'])
-                # a,b,eqn = getEqn(cache['anchors'][i]['device']['id'])
-                # a, b = getBestFit(cache['anchors'][i]['id'])
-                # print (cache['anchors'][i]['id'], getBestFit(cache['anchors'][i]['id']))
-                # sys.exit()
-                # print(cache['anchors'][i]['id'])
-                location = cache['anchors'][i]['device']['location']
-                measuredPower = cache['anchors'][i]['measuredPower']
-                # print (measuredPower, cache['anchors'][i]['id'])
-                break
+              # if r != 'b827eb0827cf':
+                if(cache['anchors'][i]['id']==r):
+                  dev = cache['anchors'][i]['device']['id']
+                  # print (cache['anchors'][i]['device']['id'])
+                  # a,b,eqn = getEqn(cache['anchors'][i]['device']['id'])
+                  # a, b = getBestFit(cache['anchors'][i]['id'])
+                  # print (cache['anchors'][i]['id'], getBestFit(cache['anchors'][i]['id']))
+                  # sys.exit()
+                  # print(cache['anchors'][i]['id'])
+                  location = cache['anchors'][i]['device']['location']
+                  measuredPower = cache['anchors'][i]['measuredPower']
+                  # print (measuredPower, cache['anchors'][i]['id'])
+                  break
           i+=1
         # location      = cache['devices'][r]['location']
         sigmaDistance = rssiToDistanceVariance(rssi, sigma, measuredPower)
         # distance = eqn(a,b,rssi)
         # distance = a + (b * rssi) ##best fit line
         # distance = math.exp((rssi - a)/b)
-        print (dev, distance, rssi)
+        # print (dev, distance, rssi)
         # if distance < 0 or distance > 10:
         #   print (distance, r)
         distance      = rssiToDistance(rssi, measuredPower)
@@ -363,7 +366,7 @@ def updateLocations(locations, delta):
 def writeToFile(rawData):
   data = rawData
 
-  write_file = str("./" + sys.argv[1] + "/actlab_location_test3_06Oct_chairkalman.csv")
+  write_file = str("./" + sys.argv[1] + "/actlab_location_test3_06Oct_prediction.csv")
   with open(write_file, "w") as output:
     for line in data:
       output.write(line + '\n')
@@ -528,7 +531,7 @@ def main():
 # t1 = threading.Thread(target=listenForCacheUpdates)
 # t1.setDaemon(True)
 # t1.start()
-read_file('./' + sys.argv[1] + 'actlab_rssi_Test3_06Oct_kalmanFiltered.csv')
+read_file('./' + sys.argv[1] + 'actlab_RSSI_Test3_06Oct.csv')
 # read_file('/Users/jermz/Desktop/b1_RSSI_mini_actlab4_nofilter.csv')
 # readBeaconData('positions_actlab_500cm.csv')
 # main loop
