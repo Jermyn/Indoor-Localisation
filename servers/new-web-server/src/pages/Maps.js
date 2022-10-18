@@ -132,10 +132,13 @@ class Maps extends Component {
 
     onEditMap = () => {
         const { actions, currentMap } = this.props;
-        actions.maps.update({
+        const map = {
             id: currentMap.id,
-            scale: this.state.scale
-        })
+            image: currentMap.image,
+            scale: this.state.scale,
+            coordinates: currentMap.coordinates
+        }
+        actions.maps.update(packageMap(map))
         this.setState({ editMapOpen: false })
     }
 

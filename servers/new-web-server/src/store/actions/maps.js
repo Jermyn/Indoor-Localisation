@@ -13,6 +13,13 @@ _ = require('underscore');
 ({FETCH_MAPS, LOAD_MAP, UPDATE_FEATURES} = require('./actionTypes'));
 console.log (restUrl)
 request = function({query, variables}) {
+  // return fetch(`${graphqlUrl}`, {
+  //   method:   'post',
+  //   mode: 'cors',
+  //   credentials: 'same-origin',
+  //   headers:  {'Content-Type': 'application/json'},
+  //   body:     JSON.stringify({query, variables})
+  // })
   return axios({
     method: 'post',
     url: `${graphqlUrl}`,
@@ -29,6 +36,7 @@ actions = {
       var query;
       query = "query { maps { id scale coordinates imageURL navMesh navPath pois } }";
       return request({query}).then(function({data}) {
+        console.log(data.data.maps)
         return dispatch({
           type: FETCH_MAPS,
           payload: data.data.maps

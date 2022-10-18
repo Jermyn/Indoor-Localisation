@@ -32,7 +32,7 @@ function packageDevice({id, anchorId, sensitivity, beaconId, measuredPower, offs
             device.anchor.sensitivity = sensitivity;
         }
         if (measuredPower != null) {
-            device.anchor.measuredPower = measuredPower;
+            device.anchor.measuredPower = parseFloat(measuredPower);
         }
         if (offset != null) {
             device.anchor.offset = offset;

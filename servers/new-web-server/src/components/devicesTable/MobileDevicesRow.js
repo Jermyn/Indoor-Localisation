@@ -35,7 +35,7 @@ function packageDevice({id, beaconId, measuredPower, gattId, gattProfile}) {
             id: beaconId
         };
         if (measuredPower != null) {
-            device.beacon.measuredPower = measuredPower;
+            device.beacon.measuredPower = parseFloat(measuredPower);
         }
     }
     if (gattId != null) {
@@ -46,7 +46,6 @@ function packageDevice({id, beaconId, measuredPower, gattId, gattProfile}) {
           device.gatt.profile = JSON.parse(gattProfile);
       }
     }
-    console.log(device);
     return device;
   }
 

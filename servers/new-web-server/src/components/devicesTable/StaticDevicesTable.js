@@ -135,7 +135,7 @@ class StaticDevicesTable extends Component {
           <TableHead>
             <TableRow>
               {headers.map(header => 
-                <TableCell>{header}</TableCell>)}
+                <TableCell key={header}>{header}</TableCell>)}
             </TableRow>
           </TableHead>
           <TableBody>

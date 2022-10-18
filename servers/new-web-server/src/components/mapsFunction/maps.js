@@ -239,7 +239,7 @@ export default class testLoadMap extends Component {
     };
 
     updateFeatureCollection = (featureCollection) => {
-        draw.deleteAll().add(featureCollection)
+        featureCollection !== null ? draw.deleteAll().add(featureCollection) : void 0
     };
 
 

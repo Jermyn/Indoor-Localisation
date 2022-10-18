@@ -106,19 +106,21 @@ class MaterialDialogForm extends Component {
                         return <TextField
                             required={required}
                             disabled={readOnly}
+                            key={key}
                             id={key}
                             label={label}
                             className={classes.textField}
                             defaultValue={defaultValue != null ? defaultValue : void 0}
                             onChange={this.handleChange}
                             variant= "outlined"
-                            multiline= "controlled"
+                            multiline={true}
                             rows={maxRows}
                         />
                     }
                     else if (type === 'file') {
                         return <input
                             accept="image/*"
+                            key={key}
                             className={classes.button}
                             id="image"
                             multiple
@@ -127,11 +129,12 @@ class MaterialDialogForm extends Component {
                         />
                     }
                     else if (type === 'select') {
-                        return (<div><FormControl className={classes.formControl}>
+                        return (<div key={key}><FormControl className={classes.formControl}>
                             <InputLabel 
                             htmlFor={aria_id}>id</InputLabel>
                             <Select
                             id={key}
+                            key={key}
                             autoWidth={true}
                             value={this.state.item}
                             inputProps={{
@@ -145,7 +148,7 @@ class MaterialDialogForm extends Component {
                                     key={x}
                                     value={x}
                                 >{x}</MenuItem>
-                            ))}}
+                            ))}
                         </Select></FormControl></div>)
 
                     }
