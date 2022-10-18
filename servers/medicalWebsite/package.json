@@ -2,7 +2,6 @@
   "name": "medicalportal",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://52.77.184.100:9200",
   "dependencies": {
     "@mapbox/maki": "^6.0.0",
     "@mapbox/mapbox-gl-draw": "^1.1.1",
@@ -32,7 +31,7 @@
     "react-dom": "^16.4.2",
     "react-draggable": "^4.3.1",
     "react-map-gl": "^4.0.9",
-    "react-mapbox-gl": "^4.2.0",
+    "react-mapbox-gl": "^4.3.0",
     "react-router-dom": "^4.3.1",
     "react-scripts": "2.0.3",
     "react-select": "^2.3.0",
