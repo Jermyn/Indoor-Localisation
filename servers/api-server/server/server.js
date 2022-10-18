@@ -2,7 +2,7 @@
 
 var loopback    = require('loopback');
 var boot        = require('loopback-boot');
-var { graphqlHTTP } = require('express-graphql');
+var graphqlHTTP = require('express-graphql');
 var app         = module.exports = loopback();
 var schema      = require('./graphql/schema')(app)
 
