@@ -32,12 +32,6 @@ actions = {
         });
       };
     },
-    // fetchBeaconLogs: -> (dispatch) ->
-    //   axios.get("#{restUrl}/Beacons/logs")
-    //   .then ({data}) -> 
-    //     dispatch 
-    //       type:     FETCH_BEACON_LOCATIONS
-    //       payload:  data
     update: function(device) {
       return function(dispatch) {
         var query, variables;

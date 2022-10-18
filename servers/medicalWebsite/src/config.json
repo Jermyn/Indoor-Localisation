@@ -1,41 +1,55 @@
 {
   "webServer": {
-    "ip":                     "137.132.165.139",
-    "port":                   80
+    "ip":                     "52.77.184.100",
+    "port":                   3001
   },
   "apiServer": {
     "rest": {
-      "url":                  "http://137.132.165.139:3000/api"
+      "url":                  "http://52.77.184.100:3000/api"
     },
     "graphql": {
-      "url":                  "http://137.132.165.139:3000/graphql"
+      "url":                  "http://52.77.184.100:3000/graphql"
     }
   },
   "elkServer": {
-    "url":                    "http://localhost:9200"
-  },
-  "pgServer": {
-    "user":                   "macpro",
-    "database":               "indoor-localization-2.0",
-    "password":               "",
-    "host":                   "localhost",
-    "port":                   5432
+    "url":                    "http://127.0.0.1:9200"
   },
   "zmqSockets": {
-    "anchorData": {
-      "pushpull":             "tcp://137.132.165.139:5566"
+    "vitals": {
+      "pushpull":             "tcp://52.77.184.100:5566"
     },
     "beaconData": {
-      "pushpull":             "tcp://137.132.165.139:5556"
+      "pushpull":             "tcp://52.77.184.100:5556"
+    },
+    "rawData": {
+      "pushpull":       "tcp://52.77.184.100:5572"
+    },
+    "sms": {
+      "pushpull":       "tcp://52.77.184.100:5557"
+    },
+    "rawRSSI": {
+      "pushpull":         "tcp://52.77.184.100:5562"
+    },
+    "battery": {
+      "pushpull":                  "tcp://52.77.184.100:5558"
+    },
+    "finalReading": {
+      "pushpull":             "tcp://52.77.184.100:5559"
+    },
+     "analysis": {
+      "pushpull":             "tcp://52.77.184.100:5560"
+    },
+    "firebase": {
+      "pushpull":             "tcp://52.77.184.100:5561"
     },
     "broker": {
-      "xpub":                 "tcp://137.132.165.139:5567",
-      "xsub":                 "tcp://137.132.165.139:5568",
-      "router":               "tcp://137.132.165.139:5570",
-      "dealer":               "tcp://137.132.165.139:5571"
+      "xpub":                 "tcp://52.77.184.100:5567",
+      "xsub":                 "tcp://52.77.184.100:5568",
+      "router":               "tcp://52.77.184.100:5570",
+      "dealer":               "tcp://52.77.184.100:5571"
     },
     "serverRequests": {
-      "reqrep":               "tcp://137.132.165.139:5569"
+      "reqrep":               "tcp://54.179.193.123:5569"
     }
   },
   "notifications": {

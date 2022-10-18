@@ -7,13 +7,14 @@ import Typography from '@material-ui/core/Typography';
 import Toolbar from '@material-ui/core/Toolbar';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from "react-redux";
-import { addUsername, fetchMaps, loadMap, fetchDevices, fetchEcgVitals, signOutUser, fetchHeartrateVitals, fetchSimulationCoordinates, fetchDeviceLocations, highlightPatient, highlightAsset, highlightStaff, addPatient, loadInfo, removePatient,editPatient } from "./actions/index";
+// import { addUsername, fetchMaps, loadMap, fetchDevices, fetchEcgVitals, signOutUser, fetchHeartrateVitals, fetchSimulationCoordinates, highlightPatient, highlightAsset, highlightStaff, addPatient, loadInfo, removePatient,editPatient, fetchDeviceLocations } from "../../actions/index";
+import Actions from '../../store/actions/actions'
 import Card from '@material-ui/core/Card';
 import CardMedia from '@material-ui/core/CardMedia';
 import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import TemporaryDrawer from './TemporaryDrawer';
+import TemporaryDrawer from '../../TemporaryDrawer';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import AddIcon from '@material-ui/icons/Add';
@@ -27,7 +28,7 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormLabel from '@material-ui/core/FormLabel';
-import BeaconTable from './BeaconTable';
+// import BeaconTable from './BeaconTable';
 import CameraIcon from '@material-ui/icons/PhotoCamera';
 import DeleteIcon from '@material-ui/icons/Delete';
 import BottomNavigation from '@material-ui/core/BottomNavigation';
@@ -58,9 +59,9 @@ import axios from 'axios';
 import ConnectedMap from './Map'
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
-import CustomizedSnackbars from './CustomizedSnackbars'
+import CustomizedSnackbars from '../../CustomizedSnackbars'
 import LinearProgress from '@material-ui/core/LinearProgress';
-import MapsPanel from './MapsPanel'
+import MapsPanel from '../../MapsPanel'
 import HomeIcon from '@material-ui/icons/Home';
 
 const TOKEN = 'pk.eyJ1IjoiZnlwZW5nIiwiYSI6ImNqcmFlazM4YjAxejkzeW1wbWg2Zmp2aWsifQ.obOnEjbqcpEWu9HIh6zPlw'; // Set your mapbox token here
@@ -142,43 +143,44 @@ const styles = theme => ({
 });
 
 const mapStateToProps = state => {
+  console.log(state)
   return {
     maps: state.maps,
-    map: state.map,
-    devices: state.devices,
+    map: state.currentMap,
+    // devices: state.devices,
     patients: state.patients,
-    assets: state.assets,
-    staff: state.staff,
+    // assets: state.assets,
+    // staff: state.staff,
     deviceLogs: state.deviceLogs,
-    ecg: state.ecg,
-    heartrate: state.heartrate,
-    isAuthenticating: state.isAuthenticating,
+    // ecg: state.ecg,
+    // heartrate: state.heartrate,
+    // isAuthenticating: state.isAuthenticating,
     authenticated: state.authenticated,
-    staticDevices: state.staticDevices,
-    featureCollection: state.featureCollection,
-    currentMap: state.currentMap
+    // staticDevices: state.staticDevices,
+    // featureCollection: state.featureCollection,
+    // currentMap: state.currentMap
   };
 };
 
 const mapDispatchToProps = dispatch => {
   return {
-    addUsername: username => dispatch(addUsername(username)),
-    editPatient: patient => dispatch(editPatient(patient)),
-    addPatient: patient => dispatch(addPatient(patient)),
-    removePatient: patient => dispatch(removePatient(patient)),
-    fetchMaps: maps => dispatch(fetchMaps(maps)),
-    loadMap: map => dispatch(loadMap(map)),
-    fetchDevices: devices => dispatch(fetchDevices(devices)),
-    // fetchStaticDevices: staticDevices => dispatch(fetchDevices(staticDevices)),
-    fetchDeviceLocations: devices => dispatch(fetchDeviceLocations(devices)),
-    loadInfo: object => dispatch(loadInfo(object)),
-    fetchEcgVitals: vitals => dispatch(fetchEcgVitals(vitals)),
-    fetchHeartrateVitals: vitals => dispatch(fetchHeartrateVitals(vitals)),
-    highlightPatient: patients => dispatch(highlightPatient(patients)),
-    highlightStaff: staff => dispatch(highlightStaff(staff)),
-    highlightAsset: asset => dispatch(highlightAsset(asset)),
-    fetchSimulationCoordinates: coord => dispatch(fetchSimulationCoordinates(coord)),
-    signOutUser: credentials => dispatch(signOutUser(credentials)),
+    // addUsername: username => dispatch(addUsername(username)),
+    // editPatient: patient => dispatch(editPatient(patient)),
+    // addPatient: patient => dispatch(addPatient(patient)),
+    // removePatient: patient => dispatch(removePatient(patient)),
+    // fetchMaps: maps => dispatch(fetchMaps(maps)),
+    // loadMap: map => dispatch(loadMap(map)),
+    // fetchDevices: devices => dispatch(fetchDevices(devices)),
+    // // fetchStaticDevices: staticDevices => dispatch(fetchDevices(staticDevices)),
+    // fetchDeviceLocations: devices => dispatch(fetchDeviceLocations(devices)),
+    // loadInfo: object => dispatch(loadInfo(object)),
+    // fetchEcgVitals: vitals => dispatch(fetchEcgVitals(vitals)),
+    // fetchHeartrateVitals: vitals => dispatch(fetchHeartrateVitals(vitals)),
+    // highlightPatient: patients => dispatch(highlightPatient(patients)),
+    // highlightStaff: staff => dispatch(highlightStaff(staff)),
+    // highlightAsset: asset => dispatch(highlightAsset(asset)),
+    // fetchSimulationCoordinates: coord => dispatch(fetchSimulationCoordinates(coord)),
+    // signOutUser: credentials => dispatch(signOutUser(credentials)),
   };
 };
 
@@ -234,8 +236,9 @@ class LocationTracking extends Component {
   }
 
   componentDidMount() {
-    this.fetch();
-    this.getDevices();
+    const { actions } = this.props;
+    actions.maps.fetch();
+    actions.devices.fetch();
     this.timer = setInterval(()=> this.getDeviceLogs(), 1000);
     this.createDataRows();
     //this.props.fetchEcgVitals();
@@ -284,25 +287,24 @@ class LocationTracking extends Component {
     let patientRows = []
     let staffRows = []
     let assetRows = []
-
     if(this.props.map != null) {
       patients = patients.filter((patient) => patient.ward == this.props.map.id)
       if(this.state.filter.type == "patients") {
         patients = patients.filter((patient) => patient.name.includes(this.state.filter.value))
       }
-      staff = staff.filter((staffmember) => staffmember.ward == this.props.map.id)
-      if(this.state.filter.type == "staff") {
-        staff = staff.filter((staffmember) => staffmember.name.includes(this.state.filter.value))
-      }
-      assets = assets.filter((asset) => asset.ward == this.props.map.id)
-      if(this.state.filter.type == "assets") {
-        assets = assets.filter((asset) => asset.name.includes(this.state.filter.value))
-      }
+      // staff = staff.filter((staffmember) => staffmember.ward == this.props.map.id)
+      // if(this.state.filter.type == "staff") {
+      //   staff = staff.filter((staffmember) => staffmember.name.includes(this.state.filter.value))
+      // }
+      // assets = assets.filter((asset) => asset.ward == this.props.map.id)
+      // if(this.state.filter.type == "assets") {
+      //   assets = assets.filter((asset) => asset.name.includes(this.state.filter.value))
+      // }
     }
 
     this.setState({patients: patients})
-    this.setState({assets: assets})
-    this.setState({staff: staff})
+    // this.setState({assets: assets})
+    // this.setState({staff: staff})
 
   }
 
@@ -311,111 +313,42 @@ class LocationTracking extends Component {
     return { id, name, ward, fat, carbs, protein };
   }
 
-  fetch = (dispatch) => {
-    let query = `
-      query {
-        maps {
-          id
-          scale
-          coordinates
-          imageURL
-          navMesh
-          navPath
-          pois
-        }
-      }
-    `
-    this.request({query})
-    .then ((data) =>
-      this.props.fetchMaps(data.data.data.maps),
-    )
-  }
-
   handleLogOut = () => {
     this.handleClose()
     this.props.signOutUser()
   }
 
   request = ({query, variables}) => {
-    let promise = axios({
+    let promise = fetch(`${graphqlUrlHTTPS}`, {
       method:   'post',
-      url:      `${graphqlUrlHTTPS}`,
+      mode: 'cors',
+      credentials: 'same-origin',
       headers:  {'Content-Type': 'application/json'},
-      data:     JSON.stringify({query, variables})
-    })
+      body:     JSON.stringify({query, variables})
+    }).then(res => res.json())
     return promise;
   }
 
-  getDevices = (dispatch) => {
-    let query = `
-      query {
-        devices {
-          id
-          type
-          location
-          anchor {
-            id
-            device {
-              id
-            }
-            sensitivity
-          }
-          beacon {
-            id
-            device {
-              id
-            }
-            measuredPower
-          }
-          gatt {
-            id
-            device {
-              id
-            }
-            profile
-            connect
-          }
-        }
-      }
-    `
-    this.request({query})
-    .then (data =>
-      this.props.fetchDevices(data.data.data.devices),
-    )
-  }
-
   getDeviceLogs = (dispatch) => {
-
-    let promise = axios({
-      method:   'get',
-      url:      `${restUrlHTTPS}/Devices/logs`,
+    const { actions } = this.props;
+    let promise = fetch(`${restUrlHTTPS}/Devices/logs`, {
+      method:   'GET',
+      mode: 'cors',
+      credentials: 'same-origin',
       headers:  {'Content-Type': 'application/json'},
-    }).then (data => {
-        this.props.fetchDeviceLocations(data.data)
+    }).then (res => res.json())
+    .then(data => {
+        // this.props.fetchDeviceLocations(data)
+        actions.devices.fetchDeviceLogs()
       }
     )
     return promise;
   }
 
   load = (id) => {
-    let query = `
-      query {
-        map (id: "${id}") {
-          id
-          scale
-          coordinates
-          imageURL
-          navMesh
-          navPath
-          pois
-        }
-      }
-    `
-    this.request({query})
-    .then ((data) => {
-      this.props.loadMap(data.data.data.map);
-      this.createDataRows();
-    })
+    const { actions } = this.props;
+    actions.maps.load(id);
+    this.createDataRows();
   }
 
   search = (e,type) => {
@@ -546,7 +479,6 @@ class LocationTracking extends Component {
         index: index
 
       }
-      console.log (action)
       this.props.highlightPatient(action)
     }
     else if(type == 'asset') {
@@ -571,7 +503,6 @@ class LocationTracking extends Component {
   }
 
   edit = (type, object) => {
-    console.log (object)
     this.props.editPatient(object);
     if(type == 'patient')
       this.props.history.push('/editPatient')
@@ -596,20 +527,25 @@ class LocationTracking extends Component {
   }
 
   createLocationItems = () => {
-    // console.log (this.props)
     let maps = this.props.maps;
     let locationItems = [];
     let locations = maps.map((item) => {
-      if (item.id == 'simulated dorms' || item.id == 'actlab') {
-        if(this.props.map.id == item.id) {
-          locationItems.push(
-            <MenuItem key={item.id} onClick={()=> this.onClickLocation(item.id)}>{item.id} <i className="fas fa-check" style={{marginLeft: 'auto'}}></i></MenuItem>
-          )
+      if (item.id == 'Clinic A_Level 1' || item.id == 'Clinic B_Level 2' || item.id == 'Endoscopy' || item.id == 'AH main lobby' || item.id == 'Walkway_to_B' || item.id == 'E4-08 Floorplan') {
+        if (this.props.map != undefined) {
+          if(this.props.map.id == item.id) {
+            locationItems.push(
+              <MenuItem key={item.id} onClick={()=> this.onClickLocation(item.id)}>{item.id} <i className="fas fa-check" style={{marginLeft: 'auto'}}></i></MenuItem>
+            )
+          } else {
+              locationItems.push(
+                <MenuItem key={item.id} onClick={()=> this.onClickLocation(item.id)}>{item.id}</MenuItem>
+              )
+          }
         } else {
             locationItems.push(
               <MenuItem key={item.id} onClick={()=> this.onClickLocation(item.id)}>{item.id}</MenuItem>
             )
-          }
+        }
       }
     })
     return locationItems;
@@ -649,179 +585,261 @@ class LocationTracking extends Component {
     if(this.state.assets.length == 0){
       noAssets = <Typography variant="subtitle1" style={{padding:'1em', textAlign: 'center' }}> There are currently no assets</Typography>;
     }
-
-
-    if(this.props.isAuthenticating) {
+    if(!this.props.authenticated) {
       return <LinearProgress />
-    } else
-    return (
-      <div className={classes.root}>
-        <AppBar position="static" style={{boxShadow: "none", backgroundColor: "white"}}>
-          <Toolbar>
-            <IconButton className={classes.menuButton} color="inherit" aria-label="Menu" onClick={this.toggleDrawer}>
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="title" className={classes.grow} style={{color: "black"}}>
-              Location Tracking
-            </Typography>
-            {auth && (
-                <div>
-                  <IconButton
-                    aria-owns={open ? 'menu-appbar' : null}
-                    aria-haspopup="true"
-                    onClick={this.handleMenu}
-                    color="inherit"
-                  >
-                    <AccountCircle style={{color: "black"}} />
-                  </IconButton>
-                  <Menu
-                    id="menu-appbar"
-                    anchorEl={anchorEl}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
-                    }}
-                    transformOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
-                    }}
-                    open={open}
-                    onClose={this.handleClose}
-                  >
-                    <MenuItem onClick={this.handleLogOut}>Logout</MenuItem>
-                  </Menu>
+    } else {
+      return (
+        <div className={classes.root}>
+          <AppBar position="static" style={{boxShadow: "none", backgroundColor: "white"}}>
+            <Toolbar>
+              <IconButton className={classes.menuButton} color="inherit" aria-label="Menu" onClick={this.toggleDrawer}>
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="title" className={classes.grow} style={{color: "black"}}>
+                Location Tracking
+              </Typography>
+              {auth && (
+                  <div>
+                    <IconButton
+                      aria-owns={open ? 'menu-appbar' : null}
+                      aria-haspopup="true"
+                      onClick={this.handleMenu}
+                      color="inherit"
+                    >
+                      <AccountCircle style={{color: "black"}} />
+                    </IconButton>
+                    <Menu
+                      id="menu-appbar"
+                      anchorEl={anchorEl}
+                      anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                      transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                      open={open}
+                      onClose={this.handleClose}
+                    >
+                      <MenuItem onClick={this.handleLogOut}>Logout</MenuItem>
+                    </Menu>
 
-                </div>
-              )}
-          </Toolbar>
-        </AppBar>
-        <CustomizedSnackbars warning={this.state.warning} onOffWarning={this.offWarning}  />
-        <ClickAwayListener onClickAway={this.toggleCloseDrawer}>
-          <TemporaryDrawer toggle={this.state.drawer} />
-        </ClickAwayListener>
-        <Button variant="contained" color="primary" className={classes.button} startIcon={<HomeIcon/>} onClick={this.goBack}>
-            Home
-        </Button>
-        <ConnectedMap featureCollection={featureCollection}/>
-        <BottomNavigation
-          value={value}
-          onChange={this.handleMenuChange}
-          showLabels
-          className={classes.root}
-        >
-          <BottomNavigationAction label="Location" icon={<MyLocationIcon />}
-            onClick={this.handleToggle}/>
-            <Dialog
-              aria-labelledby="simple-modal-title"
-              aria-describedby="simple-modal-description"
-              open={this.state.openLocation}
-              TransitionComponent={Transition}
-              onClose={this.handleMenuClose}
-              style={{alignItems:'center',justifyContent:'center'}}
-              fullWidth={true}
-            >
-              <DialogTitle>
-                Wards
-              </DialogTitle>
-              <DialogContent>
-                <MenuList>
-                  {this.createLocationItems()}
-                </MenuList>
-              </DialogContent>
-            </Dialog>
-
-            <BottomNavigationAction label="Patients" icon={<PersonPinIcon />}
-              onClick={this.handlePatientsToggle}/>
+                  </div>
+                )}
+            </Toolbar>
+          </AppBar>
+          <CustomizedSnackbars warning={this.state.warning} onOffWarning={this.offWarning}  />
+          <ClickAwayListener onClickAway={this.toggleCloseDrawer}>
+            <TemporaryDrawer toggle={this.state.drawer} />
+          </ClickAwayListener>
+          <Button variant="contained" color="primary" className={classes.button} startIcon={<HomeIcon/>} onClick={this.goBack}>
+              Home
+          </Button>
+          <ConnectedMap featureCollection={featureCollection}/>
+          <BottomNavigation
+            value={value}
+            onChange={this.handleMenuChange}
+            showLabels
+            className={classes.root}
+          >
+            <BottomNavigationAction label="Location" icon={<MyLocationIcon />}
+              onClick={this.handleToggle}/>
               <Dialog
                 aria-labelledby="simple-modal-title"
                 aria-describedby="simple-modal-description"
-                open={this.state.openPatients}
-                onClose={this.handleMenuClose}
+                open={this.state.openLocation}
                 TransitionComponent={Transition}
+                onClose={this.handleMenuClose}
                 style={{alignItems:'center',justifyContent:'center'}}
-                maxWidth={false}
+                fullWidth={true}
               >
+                <DialogTitle>
+                  Wards
+                </DialogTitle>
+                <DialogContent>
+                  <MenuList>
+                    {this.createLocationItems()}
+                  </MenuList>
+                </DialogContent>
+              </Dialog>
+
+              <BottomNavigationAction label="Patients" icon={<PersonPinIcon />}
+                onClick={this.handlePatientsToggle}/>
+                <Dialog
+                  aria-labelledby="simple-modal-title"
+                  aria-describedby="simple-modal-description"
+                  open={this.state.openPatients}
+                  onClose={this.handleMenuClose}
+                  TransitionComponent={Transition}
+                  style={{alignItems:'center',justifyContent:'center'}}
+                  maxWidth={false}
+                >
+                  <div className={classes.infoDialog}>
+                    <DialogTitle>
+                      <Typography variant="h4" style={{marginLeft: 8+'px'}}>Patients</Typography>
+                      <div style={{marginLeft: 8+ 'px', marginTop: 0.5 + 'em'}}>
+                        <InputBase className={classes.input} fullWidth={true} onChange={(e) => this.search( e, 'patients')} placeholder="Search" />
+                      </div>
+                      <hr/>
+                      {this.props.map != undefined ? <Typography variant="h6" style={{marginLeft: 8+'px'}}>Assigned In: {this.props.map.id}</Typography> : void 0}
+                      <hr/>
+                    </DialogTitle>
+                    <DialogContent>
+                      <Table className={classes.table}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell align="center">Vitals</TableCell>
+                            <TableCell align="center">Currently At</TableCell>
+                            <TableCell align="center">Actions</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.patients.map(row => {
+                            let highlightButton = ""
+                            let currentlyAt = "-"
+                            if(row.highlight) {
+                              highlightButton = <IconButton style={{background: 'black', color: 'white', opacity: '0.4'}} aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('patient', row)}>
+                                <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
+                              </IconButton>
+                            } else {
+                              highlightButton = <IconButton aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('patient', row)}>
+                                <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
+                              </IconButton>
+                            }
+
+                            this.props.deviceLogs.map((device) => {
+
+                              if(row.beacon != null) {
+                                if(device.id == row.beacon[0]) {
+                                  currentlyAt = device.map.id
+                                }
+                              }
+                            })
+
+                            return (
+                              <TableRow key={row.id}>
+                                <TableCell component="th" scope="row">
+                                  {row.name}
+                                </TableCell>
+
+                                <TableCell align="right">
+                                  <i className="fas fa-heartbeat"></i> {row.fat}
+                                  <i className="fas fa-thermometer" style={{marginLeft: 1 + 'em'}}></i> {row.fat}
+                                  </TableCell>
+                                <TableCell align="center">
+                                  {currentlyAt}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {highlightButton}
+                                  <IconButton aria-label="Edit" onClick={()=> this.edit( 'patient', row)} className={classes.margin}>
+                                    <i className="far fa-edit" style={{fontSize: 0.7+'em'}}></i>
+                                  </IconButton>
+                                  <IconButton aria-label="Info" className={classes.margin} onClick={() => this.infoButton(row)}>
+                                    <i className="fas fa-info-circle" style={{fontSize: 0.7+'em'}}></i>
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                              );
+                            })
+                            }
+                          </TableBody>
+                      </Table>
+                      { noPatients }
+                    </DialogContent>
+                  </div>
+                </Dialog>
+        <BottomNavigationAction label="Assets" icon={<i className="fas fa-briefcase-medical"  style={{fontSize:20 + 'px'}}/>}
+          onClick={this.handleAssetsToggle}/>
+          <Dialog
+              aria-labelledby="simple-modal-title"
+              aria-describedby="simple-modal-description"
+              open={this.state.openAssets}
+              onClose={this.handleMenuClose}
+              style={{alignItems:'center',justifyContent:'center', display: 'flex'}}
+              maxWidth={false}
+              TransitionComponent={Transition}
+            >
                 <div className={classes.infoDialog}>
-                  <DialogTitle>
-                    <Typography variant="h4" style={{marginLeft: 8+'px'}}>Patients</Typography>
-                    <div style={{marginLeft: 8+ 'px', marginTop: 0.5 + 'em'}}>
-                      <InputBase className={classes.input} fullWidth={true} onChange={(e) => this.search( e, 'patients')} placeholder="Search" />
-                    </div>
-                    <hr/>
-                    <Typography variant="h6" style={{marginLeft: 8+'px'}}>Assigned In: {this.props.map.id}</Typography>
-                    <hr/>
+                <DialogTitle>
+                  <Typography variant="h4" style={{marginLeft: 8+'px'}}>Assets</Typography>
+                  <div style={{marginLeft: 8+ 'px', marginTop: 0.5 + 'em'}}>
+                    <InputBase className={classes.input} fullWidth={true} onChange={(e) => this.search( e, 'assets')} placeholder="Search" />
+                  </div>
+
+
+                  <hr/>
+                  {this.props.map != undefined ? <Typography variant="h6" style={{marginLeft: 8+'px'}}>Assigned In: {this.props.map.id}</Typography> : void 0}
+                  <hr/>
                   </DialogTitle>
                   <DialogContent>
-                    <Table className={classes.table}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Name</TableCell>
-                          <TableCell align="center">Vitals</TableCell>
-                          <TableCell align="center">Currently At</TableCell>
-                          <TableCell align="center">Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {this.state.patients.map(row => {
-                          let highlightButton = ""
-                          let currentlyAt = "-"
-                          if(row.highlight) {
-                            highlightButton = <IconButton style={{background: 'black', color: 'white', opacity: '0.4'}} aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('patient', row)}>
-                              <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
-                            </IconButton>
-                          } else {
-                            highlightButton = <IconButton aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('patient', row)}>
-                              <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
-                            </IconButton>
+                  <Table className={classes.table}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell align="center">Currently At</TableCell>
+                        <TableCell align="center">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.assets.map(row => {
+                        let highlightButton = ""
+                        let currentlyAt = "-"
+                        if(row.highlight) {
+                          highlightButton = <IconButton style={{background: 'black', color: 'white', opacity: '0.4'}} aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('asset', row)}>
+                            <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
+                          </IconButton>
+                        } else {
+                          highlightButton = <IconButton aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('asset', row)}>
+                            <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
+                          </IconButton>
+                        }
+
+                        this.props.deviceLogs.map((device) => {
+                          if(row.beacon != null) {
+                          if(device.id == row.beacon[0]) {
+                            currentlyAt = device.map.id
                           }
+                        }
+                        })
 
-                          this.props.deviceLogs.map((device) => {
 
-                            if(row.beacon != null) {
-                              if(device.id == row.beacon[0]) {
-                                currentlyAt = device.map.id
-                              }
-                            }
-                          })
+                        return (
+                          <TableRow key={row.id}>
+                            <TableCell component="th" scope="row">
+                              {row.name}
+                            </TableCell>
+                            <TableCell align="center">
+                              {currentlyAt}
+                            </TableCell>
+                            <TableCell align="right">
+                              {highlightButton}
+                              <IconButton aria-label="Edit" onClick={()=> this.edit( 'asset', row)} className={classes.margin}>
+                                <i className="far fa-edit" style={{fontSize: 0.7+'em'}}></i>
+                              </IconButton>
+                              <IconButton aria-label="Info" className={classes.margin} onClick={() => this.assetInfoButton(row)}>
+                                <i className="fas fa-info-circle" style={{fontSize: 0.7+'em'}}></i>
+                              </IconButton>
 
-                          return (
-                            <TableRow key={row.id}>
-                              <TableCell component="th" scope="row">
-                                {row.name}
-                              </TableCell>
-
-                              <TableCell align="right">
-                                <i className="fas fa-heartbeat"></i> {row.fat}
-                                <i className="fas fa-thermometer" style={{marginLeft: 1 + 'em'}}></i> {row.fat}
-                                </TableCell>
-                              <TableCell align="center">
-                                {currentlyAt}
-                              </TableCell>
-                              <TableCell align="right">
-                                {highlightButton}
-                                <IconButton aria-label="Edit" onClick={()=> this.edit( 'patient', row)} className={classes.margin}>
-                                  <i className="far fa-edit" style={{fontSize: 0.7+'em'}}></i>
-                                </IconButton>
-                                <IconButton aria-label="Info" className={classes.margin} onClick={() => this.infoButton(row)}>
-                                  <i className="fas fa-info-circle" style={{fontSize: 0.7+'em'}}></i>
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                            );
-                          })
-                          }
-                        </TableBody>
-                    </Table>
-                    { noPatients }
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                  { noAssets }
                   </DialogContent>
                 </div>
-              </Dialog>
-      <BottomNavigationAction label="Assets" icon={<i className="fas fa-briefcase-medical"  style={{fontSize:20 + 'px'}}/>}
-        onClick={this.handleAssetsToggle}/>
+
+            </Dialog>
+        <BottomNavigationAction label="Staff" icon={<i className="fas fa-user-md fa-sm"  style={{fontSize:20 + 'px'}}/>}
+          onClick={this.handleStaffToggle}
+        />
         <Dialog
             aria-labelledby="simple-modal-title"
             aria-describedby="simple-modal-description"
-            open={this.state.openAssets}
+            open={this.state.openStaff}
             onClose={this.handleMenuClose}
             style={{alignItems:'center',justifyContent:'center', display: 'flex'}}
             maxWidth={false}
@@ -829,14 +847,15 @@ class LocationTracking extends Component {
           >
               <div className={classes.infoDialog}>
               <DialogTitle>
-                <Typography variant="h4" style={{marginLeft: 8+'px'}}>Assets</Typography>
+                <Typography variant="h4" style={{marginLeft: 8+'px'}}>Staff</Typography>
+
                 <div style={{marginLeft: 8+ 'px', marginTop: 0.5 + 'em'}}>
-                  <InputBase className={classes.input} fullWidth={true} onChange={(e) => this.search( e, 'assets')} placeholder="Search" />
+                  <InputBase className={classes.input} fullWidth={true} onChange={(e) => this.search( e, 'staff')}placeholder="Search" />
                 </div>
 
 
                 <hr/>
-                <Typography variant="h6" style={{marginLeft: 8+'px'}}>Assigned In: {this.props.map.id}</Typography>
+                {this.props.map != undefined ? <Typography variant="h6" style={{marginLeft: 8+'px'}}>Assigned In: {this.props.map.id}</Typography> : void 0}
                 <hr/>
                 </DialogTitle>
                 <DialogContent>
@@ -849,15 +868,15 @@ class LocationTracking extends Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {this.state.assets.map(row => {
+                    {this.state.staff.map(row => {
                       let highlightButton = ""
                       let currentlyAt = "-"
                       if(row.highlight) {
-                        highlightButton = <IconButton style={{background: 'black', color: 'white', opacity: '0.4'}} aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('asset', row)}>
+                        highlightButton = <IconButton style={{background: 'black', color: 'white', opacity: '0.4'}} aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('staff', row)}>
                           <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
                         </IconButton>
                       } else {
-                        highlightButton = <IconButton aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('asset', row)}>
+                        highlightButton = <IconButton aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('staff', row)}>
                           <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
                         </IconButton>
                       }
@@ -869,8 +888,6 @@ class LocationTracking extends Component {
                         }
                       }
                       })
-
-
                       return (
                         <TableRow key={row.id}>
                           <TableCell component="th" scope="row">
@@ -881,10 +898,10 @@ class LocationTracking extends Component {
                           </TableCell>
                           <TableCell align="right">
                             {highlightButton}
-                            <IconButton aria-label="Edit" onClick={()=> this.edit( 'asset', row)} className={classes.margin}>
+                            <IconButton aria-label="Edit" onClick={()=> this.edit( 'staff', row)}className={classes.margin}>
                               <i className="far fa-edit" style={{fontSize: 0.7+'em'}}></i>
                             </IconButton>
-                            <IconButton aria-label="Info" className={classes.margin} onClick={() => this.assetInfoButton(row)}>
+                            <IconButton aria-label="Info" className={classes.margin} onClick={() => this.staffInfoButton(row)}>
                               <i className="fas fa-info-circle" style={{fontSize: 0.7+'em'}}></i>
                             </IconButton>
 
@@ -894,101 +911,18 @@ class LocationTracking extends Component {
                     })}
                   </TableBody>
                 </Table>
-                { noAssets }
+                { noStaff }
                 </DialogContent>
               </div>
+        </Dialog>
+      </BottomNavigation>
+      </div>
 
-          </Dialog>
-      <BottomNavigationAction label="Staff" icon={<i className="fas fa-user-md fa-sm"  style={{fontSize:20 + 'px'}}/>}
-        onClick={this.handleStaffToggle}
-      />
-      <Dialog
-          aria-labelledby="simple-modal-title"
-          aria-describedby="simple-modal-description"
-          open={this.state.openStaff}
-          onClose={this.handleMenuClose}
-          style={{alignItems:'center',justifyContent:'center', display: 'flex'}}
-          maxWidth={false}
-          TransitionComponent={Transition}
-        >
-            <div className={classes.infoDialog}>
-            <DialogTitle>
-              <Typography variant="h4" style={{marginLeft: 8+'px'}}>Staff</Typography>
-
-              <div style={{marginLeft: 8+ 'px', marginTop: 0.5 + 'em'}}>
-                <InputBase className={classes.input} fullWidth={true} onChange={(e) => this.search( e, 'staff')}placeholder="Search" />
-              </div>
-
-
-              <hr/>
-              <Typography variant="h6" style={{marginLeft: 8+'px'}}>Assigned In: {this.props.map.id}</Typography>
-              <hr/>
-              </DialogTitle>
-              <DialogContent>
-              <Table className={classes.table}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell align="center">Currently At</TableCell>
-                    <TableCell align="center">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.staff.map(row => {
-                    let highlightButton = ""
-                    let currentlyAt = "-"
-                    if(row.highlight) {
-                      highlightButton = <IconButton style={{background: 'black', color: 'white', opacity: '0.4'}} aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('staff', row)}>
-                        <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
-                      </IconButton>
-                    } else {
-                      highlightButton = <IconButton aria-label="Highlight" className={classes.margin} onClick={() => this.highlight('staff', row)}>
-                        <i className="fas fa-highlighter" style={{fontSize: 0.7+'em'}}></i>
-                      </IconButton>
-                    }
-
-                    this.props.deviceLogs.map((device) => {
-                      if(row.beacon != null) {
-                      if(device.id == row.beacon[0]) {
-                        currentlyAt = device.map.id
-                      }
-                    }
-                    })
-                    return (
-                      <TableRow key={row.id}>
-                        <TableCell component="th" scope="row">
-                          {row.name}
-                        </TableCell>
-                        <TableCell align="center">
-                          {currentlyAt}
-                        </TableCell>
-                        <TableCell align="right">
-                          {highlightButton}
-                          <IconButton aria-label="Edit" onClick={()=> this.edit( 'staff', row)}className={classes.margin}>
-                            <i className="far fa-edit" style={{fontSize: 0.7+'em'}}></i>
-                          </IconButton>
-                          <IconButton aria-label="Info" className={classes.margin} onClick={() => this.staffInfoButton(row)}>
-                            <i className="fas fa-info-circle" style={{fontSize: 0.7+'em'}}></i>
-                          </IconButton>
-
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-              { noStaff }
-              </DialogContent>
-            </div>
-      </Dialog>
-    </BottomNavigation>
-    </div>
-
-    )
-
+      )
+    }
   }
 }
 
-const ConnectedLocationTracking = connect(mapStateToProps, mapDispatchToProps)(LocationTracking);
+const ConnectedLocationTracking = connect(mapStateToProps, Actions)(LocationTracking);
 
 export default withStyles(styles)(ConnectedLocationTracking);

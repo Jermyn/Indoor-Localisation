@@ -8,7 +8,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import { withStyles } from '@material-ui/core/styles';
 import _ from 'underscore'
 import { connect } from "react-redux";
-import { confirmType, addPatient, fetchMaps, editPatient, updatePatient, fetchPatientCount, updatePatientCount, removePatient, signOutUser, assignBeacon, assignDevices, assignRoom, editRoom, fetchRooms, AssignAnchorToRoom } from "./actions/index";
+import { confirmType, addPatient, fetchMaps, editPatient, updatePatient, fetchPatientCount, updatePatientCount, removePatient, signOutUser, assignBeacon, assignDevices, assignRoom, editRoom, fetchRooms } from "./actions/index";
 import Card from '@material-ui/core/Card';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import TemporaryDrawer from './TemporaryDrawer';
@@ -148,7 +148,7 @@ const mapDispatchToProps = dispatch => {
     updatePatientCount: count => dispatch(updatePatientCount(count)),
     updatePatient: patient => dispatch(updatePatient(patient)),
     fetchRooms: () => dispatch(fetchRooms()),
-    AssignAnchorToRoom: room => dispatch(AssignAnchorToRoom(room)),
+    // AssignAnchorToRoom: room => dispatch(AssignAnchorToRoom(room)),
   };
 };
 
@@ -456,11 +456,11 @@ class AnchorInfo extends Component {
   };
 
   handleSubmit = (e) => {
-    const { AssignAnchorToRoom } = this.props
+    // const { AssignAnchorToRoom } = this.props
     e.preventDefault();
-    this.state.roomInfo.forEach(room => {
-      AssignAnchorToRoom(room)
-    })
+    // this.state.roomInfo.forEach(room => {
+    //   AssignAnchorToRoom(room)
+    // })
     this.props.history.push('/home')
     // AssignAnchorToRoom(this.state.roomInfo)
     // this.handleClose()

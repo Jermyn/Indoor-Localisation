@@ -202,15 +202,15 @@ render() {
               </Typography>
             </Grid>
           </Grid>
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <Grid
               container
               spacing={40}
               alignItems={'center'}
               direction={'row'}
               justify={'center'}
-            >
-              <Grid item>
+            > */}
+              {/* <Grid item>
                 <Button component={Link} to="/addPatient" variant="outlined" color="primary" className={classes.addButton}>
                   <AddIcon /> Patient
                 </Button>
@@ -224,9 +224,9 @@ render() {
                 <Button component={Link} to="/addStaff" variant="outlined" color="primary" className={classes.addButton} >
                   <AddIcon /> Staff
                 </Button>
-              </Grid>
-            </Grid>
-          </Grid>
+              </Grid> */}
+            {/* </Grid>
+          </Grid> */}
           <Grid item xs={12}>
             <Grid
               container
@@ -260,7 +260,7 @@ render() {
                   </CardActionArea>
                 </Card>
               </Grid>
-              <Grid item>
+              {/* <Grid item>
                 <Card className={classes.card}>
                   <CardActionArea
                     component={Link}
@@ -272,8 +272,8 @@ render() {
                     height="180"
                     image="img/ContactTracing.jpg"
                     title="Contact Tracing"
-                  />
-                    <CardContent>
+                  /> */}
+                    {/* <CardContent>
                       <Typography gutterBottom variant="h6" component="h2">
                         Contact Tracing
                       </Typography>
@@ -283,7 +283,7 @@ render() {
                     </CardContent>
                   </CardActionArea>
                 </Card>
-              </Grid>
+              </Grid> */}
               <Grid item>
                 <Card className={classes.card}>
                   <CardActionArea

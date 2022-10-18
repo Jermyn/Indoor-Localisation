@@ -314,7 +314,7 @@ export default class testLoadMap extends Component {
                     id="reference_top"
                     layout={{ visibility: 'none' }}
                 />
-                <Layer
+                {/* <Layer
                     type="symbol"
                     id="staticDevices"
                     layout={{
@@ -339,7 +339,7 @@ export default class testLoadMap extends Component {
                         }}/>
                     )})
                 }
-                </Layer>
+                </Layer> */}
                 <Layer
                         type="symbol"
                         id="mobileDevices"

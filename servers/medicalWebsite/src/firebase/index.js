@@ -40,9 +40,11 @@ import "firebase/auth";
 vitalFirebase.auth().signInWithEmailAndPassword("admin@admin.com", "password");
 const storage = vitalFirebase.storage();
 const databaseRef = vitalFirebase.database().ref();
-const ecgRef = databaseRef.child("ecg");
-const heartrateRef = databaseRef.child("heartrate");
 const medicalPortalDatabaseRef = medicalPortalFirebase.database().ref();
+const ecgRef = databaseRef.child("ecg");
+const heartrateRef = medicalPortalDatabaseRef.child("vitals/heartrate");
+const imuRef = medicalPortalDatabaseRef.child("vitals/homerehab")
+
 
 const beaconCountRef = medicalPortalDatabaseRef.child("beaconCounter")
 const patientCountRef = medicalPortalDatabaseRef.child("patientCounter")
@@ -53,5 +55,5 @@ const fakeDataRef = medicalPortalDatabaseRef.child("fakeData")
 
 
 export {
-  beaconCountRef, patientCountRef, assetCountRef, staffCountRef, fakeDataRef, storage, ecgRef, medicalPortalFirebase, heartrateRef, vitalFirebase as default
+  beaconCountRef, patientCountRef, imuRef, assetCountRef, staffCountRef, fakeDataRef, storage, ecgRef, medicalPortalFirebase, heartrateRef, vitalFirebase as default
 }

@@ -5,7 +5,7 @@ import Login from "./Login";
 import AddPatient from "./AddPatient";
 import AddAsset from "./AddAsset";
 import AddStaff from "./AddStaff";
-import LocationTracking from "./LocationTracking";
+import LocationTracking from "./components/localisation/LocationTracking";
 import ContactTracing from "./ContactTracing";
 import ContactTracingResults from "./ContactTracingResults";
 import PatientInfo from "./PatientInfo";
@@ -17,6 +17,7 @@ import AssignAnchors from "./AssignAnchors"
 import anchorInfo from "./anchorInfo";
 // import Redirect from './Redirect'
 import Visualize from './Visualize'
+import Acceleration from './components/patient-display/AccelerationChart'
 
 export default () =>
   <Switch>
@@ -31,6 +32,7 @@ export default () =>
     <Route path="/contactTracingResults" exact component={ContactTracingResults} />
     <Route path="/patientInfo" exact component={PatientInfo} />
     <Route path="/patientInfo2" exact component={PatientInfo2} />
+    <Route path="/acceleration" exact component={Acceleration} />
     <Route path="/staffInfo" exact component={AssetStaffInfo} />
     <Route path="/assetInfo" exact component={AssetStaffInfo} />
     <Route path="/addConfirmation" exact component={AddConfirmation} />

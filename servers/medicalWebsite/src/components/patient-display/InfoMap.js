@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import { connect } from "react-redux";
-import { fetchMaps, confirmType, fetchDeviceLocations } from "./actions/index";
+import { fetchMaps, confirmType, fetchDeviceLocations } from "../../actions/index";
 import MapGL, {Marker, Popup, NavigationControl} from 'react-map-gl';
 import ReactMapboxGl from 'react-mapbox-gl';
 import _ from 'underscore'
@@ -29,7 +29,6 @@ const navStyle = {
 };
 
 const mapStateToProps = state => {
-  console.log(state)
   return {
     maps: state.maps,
     devices: state.devices,
@@ -272,7 +271,6 @@ class InfoMap extends Component {
 
   }
   initializeMap = (map, jump) => {
-    const mapgl = this.mapLocation.current.state.map
     this.setState({initial: map})
     this.setState({map})
 
@@ -447,7 +445,6 @@ class InfoMap extends Component {
     } catch(err) {
         alert(err)
       }
-    console.log(typeof(devices))
     createDevices = createDevices
     return devices;
   }

@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {connect} from "react-redux";
 import moment from "moment";
-
+import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import AppBar from '@material-ui/core/AppBar';
 import {withStyles} from "@material-ui/core/styles";
@@ -13,20 +13,20 @@ import AccountCircle from "@material-ui/icons/AccountCircle";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import StopIcon from '@material-ui/icons/Stop';
-
+import HomeIcon from '@material-ui/icons/Home';
 import {
     signOutUser,
     verifyAuth,
     fetchRooms,
     readPatients,
     fetchDashboardPatients,
-    loadInfo
+    loadInfo,
+    fetchHeartrateVitals
 } from "../../actions";
 import PatientReading from "./PatientReading";
-import Button from "@material-ui/core/Button";
 
 
-const styles = {
+const useStyles =  {
     root: {
         flexGrow: 1,
     },
@@ -63,6 +63,9 @@ const styles = {
     },
     gridContainerButton: {
         padding: 50,
+    },
+    button: {
+        margin: '2em'
     }
 
 };
@@ -70,13 +73,15 @@ const styles = {
 const checkpoints = [8, 12, 16, 20]
 
 const mapStateToProps = state => {
+    console.log(state)
     return {
         username: state.username,
         authenticated: state.authenticated,
         isAuthenticating: state.isAuthenticating,
         rooms: state.rooms,
         patients: state.patients,
-        patients_es: state.patients_es
+        patients_es: state.patients_es,
+        heartrate: state.heartrate
     };
 };
 
@@ -87,7 +92,8 @@ const mapDispatchToProps = dispatch => {
         fetchRooms: () => dispatch(fetchRooms()),
         readPatients: () => dispatch(readPatients()),
         fetchDashboardPatients: (tStart, tEnd) => dispatch(fetchDashboardPatients(tStart, tEnd)),
-        loadInfo: object => dispatch(loadInfo(object))
+        loadInfo: object => dispatch(loadInfo(object)),
+        fetchHeartrateVitals: () => dispatch(fetchHeartrateVitals())
     };
 };
 
@@ -169,6 +175,11 @@ class PatientDashboard extends Component {
 
     }
 
+    goBack = (e) => {
+        e.preventDefault();
+        this.props.history.push('/home');
+    }
+
     async periodUpdate() {
         if (this.state.periodCounter === 0) {
             await this.setupTime()
@@ -185,6 +196,7 @@ class PatientDashboard extends Component {
             t1.subtract(2, 'hours')
         }
         this.props.fetchDashboardPatients(t1, t2);
+        this.props.fetchHeartrateVitals()
     }
 
     displaySinglePatient(id) {
@@ -328,14 +340,14 @@ class PatientDashboard extends Component {
                         <StopIcon style={{color: '#777777'}}/> Inactive reading
                     </Typography>
                     <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                        <StopIcon style={{color: '#43a047'}}/> Normal Pulse Rate and SpO2
+                        <StopIcon style={{color: '#43a047'}}/> Normal Pulse Rate
                     </Typography>
                     <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
-                        <StopIcon style={{color: '#fb8c00'}}/> Abnormal Pulse Rate or SpO2
+                        <StopIcon style={{color: '#fb8c00'}}/> Abnormal Pulse Rate
                     </Typography>
-                    <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
+                    {/* <Typography gutterBottom variant="h6" component="h2" color={'inherit'}>
                         <StopIcon style={{color: '#e53935'}}/> Abnormal Pulse Rate and SpO2
-                    </Typography>
+                    </Typography> */}
                 </Grid>
             </Grid>
         </Grid>;
@@ -343,17 +355,18 @@ class PatientDashboard extends Component {
 
     renderMainGrid() {
         const {classes} = this.props;
-
+        console.log(this.props.heartrate)
         if (!this.props.rooms || !this.props.patients_es || !this.props.patients) {
             return <div></div>
         }
-
+        console.log(this.props.patients)
         let patients_es = this.props.patients_es.slice()
         patients_es.map(patient_es => {
             patient_es.inRoom = false
             const patient = this.props.patients.find(patient => patient.devices[0].uuid === patient_es.id)
             patient_es.bed = patient ? parseInt(patient.bed.id) : 0
             patient_es.name = patient ? patient.name : ''
+            patient_es.devices = patient ? patient.devices : {}
         })
         patients_es.sort((a, b) => (a.bed > b.bed) ? 1 : -1)
 
@@ -371,7 +384,7 @@ class PatientDashboard extends Component {
                             return (
                                 <Grid item className={classes.gridCard} xs={4} sm={4} md={3} lg={2} xl={1}
                                       key={patient.id} onClick={() => this.displaySinglePatient(patient.id)}>
-                                    <PatientReading patient={patient}/>
+                                    <PatientReading patient={patient} heartrate={this.props.heartrate}/>
                                 </Grid>
                             )
                         }
@@ -387,6 +400,9 @@ class PatientDashboard extends Component {
         return (
             <div className={classes.root}>
                 {this.renderAppBar()}
+                <Button variant="contained" color="primary" className={classes.button} starticon={<HomeIcon/>} onClick={this.goBack}>
+                    Home
+                </Button>
                 {this.renderMiscGrid()}
                 {this.renderMainGrid()}
             </div>
@@ -396,4 +412,4 @@ class PatientDashboard extends Component {
 
 const ConnectedDashboard = connect(mapStateToProps, mapDispatchToProps)(PatientDashboard);
 
-export default withStyles(styles)(ConnectedDashboard);
+export default withStyles(useStyles)(ConnectedDashboard);

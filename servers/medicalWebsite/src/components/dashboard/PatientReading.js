@@ -42,6 +42,24 @@ class PatientReading extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         if (this.props && prevProps !== this.props) {
+            // let deviceid = ''
+            // let heartrate = 0
+            //  this.props.patient.devices.map(device => {
+            //     console.log(device)
+            //     if (device.id.charAt(0) == 'h') {
+            //         deviceid = device.uuid
+            //     }
+                // else if (device.id.charAt(0) == 'i') {
+                //     return device.uuid
+                // }
+            // })
+            // console.log(this.props.heartrate[deviceid])
+            // if (deviceid in this.props.heartrate) {
+            //     heartrate = this.props.heartrate[deviceid].value
+            // } else if (!(deviceid in this.props.heartrate)) {
+            //     heartrate = 110
+            // }
+            // const heartrate = this.props.heartrate !== undefined ? this.props.heartrate[deviceid].value : 0
             const hr = this.props.patient.heart_rate
             const spo2 = this.props.patient.spo2
             const displayCur = this.props.patient.period
@@ -62,6 +80,7 @@ class PatientReading extends React.Component {
                     status = this.props.classes.error
                 }
                 this.setState({status, displayCur})
+                // this.setState({heartrate})
             }
 
         }
@@ -77,9 +96,9 @@ class PatientReading extends React.Component {
                     <Typography gutterBottom variant="h6" component="p" color={'inherit'}>
                         PR: <strong>{this.props.patient.heart_rate}</strong>
                     </Typography>
-                    <Typography variant="h6" component="p" color={'inherit'}>
+                    {/* <Typography variant="h6" component="p" color={'inherit'}>
                         SpO2: <strong>{this.props.patient.spo2}</strong>
-                    </Typography>
+                    </Typography>  */}
                 </CardContent>
             </Card>
         );

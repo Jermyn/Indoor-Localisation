@@ -83,6 +83,7 @@ class PlaybackChart extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (this.props.vitals !== prevProps.vitals && this.props.vitals != null && this.props.vitals.length != 0) {
+            console.log(this.props)
             let vitals = this.props.vitals
             const oldBtcDataSet = this.state.lineChartData.datasets[0];
 

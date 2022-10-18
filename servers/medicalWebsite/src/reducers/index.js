@@ -43,9 +43,10 @@ import {
     READ_ASSETS,
     READ_STAFF,
     FETCH_ROOMS,
-
+    FETCH_ACCELERATION_VITALS,
     FETCH_DASHBOARD_PATIENTS,
     FETCH_DASHBOARD_PATIENTS_2,
+    FETCH_PLAYBACK_LOCATION
 
 } from "../constants/action-types";
 import update from 'immutability-helper';
@@ -199,6 +200,8 @@ const rootReducer = (state = initialState, action) => {
             return {...state, simulation: action.payload}
         case FETCH_HEARTRATE_VITALS:
             return {...state, heartrate: action.payload};
+        case FETCH_ACCELERATION_VITALS:
+            return {...state, acc: action.payload};
         case LOAD_INFO:
             return {...state, info: action.payload};
         case FETCH_CONTACT_TRACE:
@@ -265,6 +268,8 @@ const rootReducer = (state = initialState, action) => {
             return {...state, patients_es: action.payload};
         case FETCH_DASHBOARD_PATIENTS_2:
             return {...state, patients_es: action.payload};
+        case FETCH_PLAYBACK_LOCATION:
+            return {...state, locationData: action.payload};
         default:
             return state;
     }

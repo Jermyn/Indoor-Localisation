@@ -340,7 +340,7 @@ class PlaybackMode extends Component {
             }
         };
 
-        axios.get(`/zmq/vitals/_search?scroll=1m`, {
+        axios.get(`/vitals/_search?scroll=1m`, {
             params: {
                 source: JSON.stringify(query),
                 source_content_type: 'application/json'

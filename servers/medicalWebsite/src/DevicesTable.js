@@ -25,8 +25,8 @@ import ConnectedAddDeviceForm from "./AddDeviceForm"
 import axios from 'axios'
 
 
-const restUrlHTTPS = `http://137.132.165.139:3000/api`;
-const graphqlUrlHTTPS = 'http://137.132.165.139:3000/graphql';
+const restUrlHTTPS = `http://52.77.184.100:3000/api`;
+const graphqlUrlHTTPS = 'http://52.77.184.100:3000/graphql';
 
 const mapDispatchToProps = dispatch => {
   return {

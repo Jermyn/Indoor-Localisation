@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import { connect } from "react-redux";
-import { fetchMaps, confirmType, fetchDeviceLocations } from "./actions/index";
+import { fetchMaps, confirmType, fetchDeviceLocations } from "../../actions/index";
 import MapGL, {Marker, Popup, NavigationControl} from 'react-map-gl';
 import ReactMapboxGl from 'react-mapbox-gl';
 import { Source, Layer, Feature } from "react-mapbox-gl";

@@ -17,7 +17,7 @@ const e             = React.createElement;
 
 
 const TOKEN = 'pk.eyJ1IjoiZnlwZW5nIiwiYSI6ImNqcmFlazM4YjAxejkzeW1wbWg2Zmp2aWsifQ.obOnEjbqcpEWu9HIh6zPlw'; // Set your mapbox token here
-const graphqlUrlHTTPS = 'http://137.132.165.139:3000/graphql';
+const graphqlUrlHTTPS = 'http://52.77.184.100:3000/graphql';
 
 
 const styles = theme => ({

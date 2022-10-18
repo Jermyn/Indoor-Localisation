@@ -130,7 +130,7 @@ class Login extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     if(this.props.authenticated) {
-      this.props.history.push('/dashboard');
+      this.props.history.push('/home');
     }
   }
   renderAuthenticationError = () => {

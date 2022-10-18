@@ -81,9 +81,9 @@ export default class testLoadMap extends Component {
         if (!_.isEqual(prevProps.map, this.props.map)) {
             this.initializeMap(this.props.map);
         }
-        if (loaded && !_.isEqual(prevProps.featureCollection, this.props.featureCollection)) {
-            this.updateFeatureCollection(this.props.featureCollection);
-        }
+        // if (loaded && !_.isEqual(prevProps.featureCollection, this.props.featureCollection)) {
+        //     this.updateFeatureCollection(this.props.featureCollection);
+        // }
           
     }
 
@@ -220,9 +220,9 @@ export default class testLoadMap extends Component {
         mapgl.on('draw.update', function({features}) {
             onEditFeatures(features);
         });
-        setTimeout(() => {
-            this.updateFeatureCollection(featureCollection);
-        }, 500);
+        // setTimeout(() => {
+        //     this.updateFeatureCollection(featureCollection);
+        // }, 500);
         loaded = true
     };
 
@@ -344,7 +344,7 @@ export default class testLoadMap extends Component {
                 center={center}
                 movingMethod={'jumpTo'}
                 containerStyle={{
-                    height: '80vh',
+                    height: '70vh',
                     width: '100vw - 24px'}}
                 onStyleLoad={this.onStyleLoad}
             >

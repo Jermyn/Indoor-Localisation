@@ -44,9 +44,10 @@ import {
     UPDATE_ASSET,
     UPDATE_STAFF,
     FETCH_ROOMS,
-
+    FETCH_ACCELERATION_VITALS,
     FETCH_DASHBOARD_PATIENTS,
-    FETCH_DASHBOARD_PATIENTS_2
+    FETCH_DASHBOARD_PATIENTS_2,
+    FETCH_PLAYBACK_LOCATION
 
 } from "../constants/action-types";
 
@@ -57,12 +58,14 @@ import {
     patientCountRef,
     staffCountRef,
     assetCountRef,
+    imuRef,
     medicalPortalFirebase
 } from "../firebase/index"
 
 import axios from 'axios'
 import template from "../database/template.json";
 import moment from "moment";
+import { FullscreenControl } from "mapbox-gl";
 
 var Promise, graphqlUrl, restUrl, _, request
 Promise = require('bluebird');
@@ -73,16 +76,22 @@ restUrl = require('../config').apiServer.rest.url;
 
 _ = require('underscore');
 //  import restUrl from ('../../config').apiServer.rest.url;
-
 request = function ({query, variables}) {
-    return axios({
-        method: 'post',
-        url: `${graphqlUrl}`,
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({query, variables})
-    });
+    return fetch(`${graphqlUrl}`, {
+        method:   'post',
+        mode: 'cors',
+        credentials: 'same-origin',
+        headers:  {'Content-Type': 'application/json'},
+        body:     JSON.stringify({query, variables})
+    })
+    // return axios({
+    //     method: 'post',
+    //     url: `${graphqlUrl}`,
+    //     headers: {
+    //         'Content-Type': 'application/json'
+    //     },
+    //     data: JSON.stringify({query, variables})
+    // });
 };
 
 export const addUsername = username => ({
@@ -581,36 +590,36 @@ export const fetchContactTrace = (traceDetails) => async dispatch => {
 
 }
 
-function getAPI(scrollQuery, fullShot) {
+// function getAPI(scrollQuery, fullShot) {
 
-    axios.get(`/_search/scroll`, {
-        params: {
-            source: JSON.stringify(scrollQuery),
-            source_content_type: 'application/json'
-        }
-    }).then((res) => {
+//     axios.get(`/_search/scroll`, {
+//         params: {
+//             source: JSON.stringify(scrollQuery),
+//             source_content_type: 'application/json'
+//         }
+//     }).then((res) => {
 
-        res.data.hits.hits.forEach(timestamp => {
-            let item = timestamp._source
-            item.key = timestamp._id;
-            // item.contact = []
-            fullShot.push(item)
+//         res.data.hits.hits.forEach(timestamp => {
+//             let item = timestamp._source
+//             item.key = timestamp._id;
+//             // item.contact = []
+//             fullShot.push(item)
 
-        })
+//         })
 
-        let scroll_id = res.data._scroll_id
-        let scrollQuery = {
-            'scroll': '1m',
-            'scroll_id': scroll_id
-        }
-        let scroll_size = res.data.hits.hits.length
+//         let scroll_id = res.data._scroll_id
+//         let scrollQuery = {
+//             'scroll': '1m',
+//             'scroll_id': scroll_id
+//         }
+//         let scroll_size = res.data.hits.hits.length
 
-        if (scroll_size > 0) {
-            getAPI(scrollQuery, fullShot)
-        }
+//         if (scroll_size > 0) {
+//             getAPI(scrollQuery, fullShot)
+//         }
 
-    })
-}
+//     })
+// }
 
 export const fetchNewBeacon = () => async dispatch => {
     let precomputedPath = `beaconCounter/`
@@ -727,6 +736,109 @@ export const fetchSpecificHeartrateVitals = (uuid) => async dispatch => {
     heartrateRef.child(uuid).on("value", snapshot => {
         dispatch({
             type: FETCH_HEARTRATE_VITALS,
+            payload: snapshot.val()
+        });
+    });
+}
+
+export const fetchPlaybackLocation = () => async dispatch => {
+    const query = {
+        "size": 10000,
+        "sort": [
+            {
+            "@timestamp": {
+                "order": "asc"
+            }
+            }
+        ],
+        "query": {
+            "bool": {
+            "must": [
+                {
+                "term": {
+                    "id": "b0"
+                }
+                },
+                {
+                "range": {
+                    "@timestamp": {
+                    "gte": "2021-12-07",
+                    "lte": "2021-12-12",
+                    "time_zone": "+08:00"
+                    }
+                }
+                }
+            ]
+            }
+        }
+    }
+
+    fetch("http://52.77.184.100:9200/position_update/_search?scroll=1m", {
+        method: "POST",
+        body: JSON.stringify(query),
+        mode: 'cors',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(res => res.json())
+        .then(data => {
+            
+            let fullTrace = data.hits.hits
+            let fullShot = []
+            let scroll_size = 1
+            fullShot = fullShot.concat(fullTrace)
+            let scroll_id = data._scroll_id
+            let scrollQuery = {
+                'scroll' : '1m',
+                'scroll_id': scroll_id
+            }
+            getAPI(scrollQuery, fullShot, dispatch)
+            
+            console.log(fullShot.length)
+            dispatch({
+                type: FETCH_PLAYBACK_LOCATION,
+                payload: fullShot
+            })
+        })
+        .catch(error => {
+            console.error(
+                "There has been a problem with your fetch operation:",
+                error
+        )});
+}
+
+function getAPI (scrollQuery, fullShot, dispatch) {
+    fetch(`http://52.77.184.100:9200/_search/scroll`, {
+     method:   'post',
+     mode: 'cors',
+     credentials: 'same-origin',
+     headers:  {'Content-Type': 'application/json'},
+     body:     JSON.stringify(scrollQuery)
+ }).then((res) => res.json()
+   .then(data => {
+        console.log(data)
+        let fullTrace = data.hits.hits
+        fullShot = fullShot.concat(fullTrace)
+
+        let scroll_id = data._scroll_id
+        let scrollQuery = {
+            'scroll' : '1m',
+            'scroll_id': scroll_id
+        }
+        let scroll_size = data.hits.hits.length
+        console.log(scroll_size, fullShot.length)
+        if(scroll_size > 0) {
+            getAPI(scrollQuery, fullShot)
+        }
+ }))
+}
+
+export const fetchSpecificAccelerationVitals = (uuid) => async dispatch => {
+    imuRef.child(uuid).on("value", snapshot => {
+        dispatch({
+            type: FETCH_ACCELERATION_VITALS,
             payload: snapshot.val()
         });
     });

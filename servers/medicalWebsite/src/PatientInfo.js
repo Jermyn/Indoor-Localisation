@@ -178,8 +178,8 @@ class PatientInfo extends Component {
             chartMode: ['playback'],
             mapMode: ['live'],
             endpoint: "https://330f4015.ngrok.io",
-            startTime: '2019-03-11T15:38:48.033972',
-            endTime: '2019-03-11T15:38:49.271003',
+            startTime: '2021-12-01T11:38:48.033972',
+            endTime: '2021-12-01T13:38:49.271003',
             playbackRes: [],
             ecg: [],
             heartrate: [],
@@ -332,13 +332,18 @@ class PatientInfo extends Component {
 
         };
 
-        axios.get('http://localhost:9200/_search', {
-            params: {
-                source: JSON.stringify(query),
-                source_content_type: 'application/json'
+        fetch('http://52.77.184.100:9200/_search', {
+            method: "POST",
+            body: JSON.stringify(query),
+            mode: 'cors',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
             }
-        }).then((res) => {
-            this.setState({playbackRes: res.data.hits.hits})
+        }).then(res => res.json()) 
+        .then(data => {
+            console.log(data)
+            // this.setState({playbackRes: res.data.hits.hits})
         });
     }
 
@@ -476,9 +481,9 @@ class PatientInfo extends Component {
                                         <div className={classes.toggleContainer}>
                                             <ToggleButtonGroup value={this.state.chartMode} exclusive
                                                                onChange={this.handleFormat}>
-                                                {/* <ToggleButton value="live">
+                                                <ToggleButton value="live">
                         Live
-                      </ToggleButton> */}
+                      </ToggleButton>
                                                 <ToggleButton value="playback">
                                                     Playback
                                                 </ToggleButton>

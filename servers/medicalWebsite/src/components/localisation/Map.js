@@ -2,14 +2,14 @@ import React, {Component} from 'react';
 import { connect } from "react-redux";
 import _ from 'underscore'
 import Promise from 'bluebird'
-import { fetchMaps, updateDevice, confirmType, fetchSimulationCoordinates, updateMap, fetchDevices, loadMap } from "./actions/index";
+import { fetchMaps, updateDevice, confirmType, fetchSimulationCoordinates, updateMap, fetchDevices, loadMap } from "../../actions/index";
 import MapGL, {Marker, Popup, NavigationControl} from 'react-map-gl';
 import ReactMapboxGl from 'react-mapbox-gl';
 import { Source, Layer, Feature } from "react-mapbox-gl";
 import mapboxgl from 'mapbox-gl';
-import MapsPanel from './MapsPanel'
-import LoadMap from './Map/mapsFunction/maps'
-import MaterialDialogForm from './MaterialDialogForm'
+import MapsPanel from '../../MapsPanel'
+import LoadMap from '../../Map/mapsFunction/maps'
+import MaterialDialogForm from '../../MaterialDialogForm'
 // import StatePin from './StatePin'
 import { withStyles } from '@material-ui/core/styles';
 const e             = React.createElement;
@@ -400,7 +400,6 @@ handleCreatedMap = (e) => {
       let mobileDevices = []
       let staffDevices = []
       let assetDevices = []
-      console.log (this.props.patients)
       filteredLogs.map(device => {
         this.props.patients.forEach(patient => {
           if(patient.beacon != null) {

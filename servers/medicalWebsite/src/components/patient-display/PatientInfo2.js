@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import {connect} from "react-redux";
-
 import AppBar from '@material-ui/core/AppBar';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -14,7 +13,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import {withStyles} from '@material-ui/core/styles';
-
+import InfoMap from "./InfoMap";
 import TemporaryDrawer from '../../TemporaryDrawer';
 import ConnectedPlaybackMode from './PlaybackMode';
 
@@ -26,12 +25,16 @@ import {
     fetchEcgVitals,
     signOutUser,
     fetchSpecificHeartrateVitals,
-    fetchSpecificEcgVitals
+    fetchSpecificEcgVitals,
+    fetchSpecificAccelerationVitals
 } from "../../actions/index";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import Button from "@material-ui/core/Button";
-
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import LiveDisplay from './LiveDisplay';
+import PlaybackMapMode from './PlaybackMapMode';
 
 const styles = theme => ({
     container: {
@@ -105,11 +108,14 @@ const styles = theme => ({
 });
 
 const mapStateToProps = state => {
+    console.log(state)
     return {
         beacon: state.beacon,
         info: state.info,
         isAuthenticating: state.isAuthenticating,
         authenticated: state.authenticated,
+        acc: state.acc,
+        heartrate: state.heartrate
     };
 };
 
@@ -122,7 +128,8 @@ const mapDispatchToProps = dispatch => {
         removeListenerSpecificHeartrateVitals: uuid => dispatch(removeListenerSpecificHeartrateVitals(uuid)),
         fetchSpecificEcgVitals: vitals => dispatch(fetchSpecificEcgVitals(vitals)),
         removeListenerSpecificEcgVitals: uuid => dispatch(removeListenerSpecificEcgVitals(uuid)),
-        signOutUser: credentials => dispatch(signOutUser(credentials))
+        signOutUser: credentials => dispatch(signOutUser(credentials)),
+        fetchSpecificAccelerationVitals : vitals => dispatch(fetchSpecificAccelerationVitals(vitals))
     };
 };
 
@@ -153,6 +160,7 @@ class PatientInfo2 extends Component {
             playbackRes: [],
             ecg: [],
             heartrate: [],
+            acc: []
         };
     }
 
@@ -163,17 +171,18 @@ class PatientInfo2 extends Component {
             this.setState({name: this.props.info.name})
             this.setState({devices: this.props.info.devices})
 
-
+            // this.timer = setInterval(() => this.props.fetchSpecificAccelerationVitals(), 1000);
+            
             let devices = this.props.info.devices
             if (devices != null && devices[0] != "None") {
                 devices.map((device) => {
-                    // if (device.id.charAt(0) == 'e') {
-                    //     this.props.fetchSpecificEcgVitals(device.uuid);
-                    // }
-                    //
-                    // if (device.id.charAt(0) == 'h') {
-                    //     this.props.fetchSpecificHeartrateVitals(device.uuid);
-                    // }
+                    if (device.id.charAt(0) == 'i') {
+                        this.props.fetchSpecificAccelerationVitals(device.uuid);
+                    }
+                    
+                    if (device.id.charAt(0) == 'h') {
+                        this.props.fetchSpecificHeartrateVitals(device.uuid);
+                    }
                 })
             }
         } else {
@@ -206,6 +215,10 @@ class PatientInfo2 extends Component {
             this.setState({heartrate: this.props.heartrate})
         }
 
+        if (this.props.acc !== prevProps.acc) {
+            this.setState({acc: this.props.acc})
+        }
+
         if (this.props.isAuthenticating == false && this.props.authenticated == false) {
             this.props.history.push('/');
         }
@@ -217,6 +230,11 @@ class PatientInfo2 extends Component {
 
     toggleCloseDrawer = () => {
         this.setState({drawer: false});
+    }
+
+    handleFormat = (event, chartMode) => {
+        if (chartMode != this.state.chartMode && chartMode != null)
+            this.setState({chartMode});
     }
 
     handleMenu = event => {
@@ -255,6 +273,15 @@ class PatientInfo2 extends Component {
     goBack = (e) => {
         e.preventDefault();
         this.props.history.push('/dashboard');
+    }
+
+    handleTabChange = (event, value) => {
+        this.setState({tab: value});
+    };
+
+    handleMapFormat = (event, mapMode) => {
+        if (mapMode != this.state.mapMode && mapMode != null)
+            this.setState({mapMode});
     }
 
     render() {
@@ -309,7 +336,18 @@ class PatientInfo2 extends Component {
                     <Grid container className={classes.demo}>
                         <Card className={classes.card}>
                             <CardContent>
-                                <Grid container>
+                                    <Grid item xs={12}>
+                                        <Tabs
+                                            value={this.state.tab}
+                                            onChange={this.handleTabChange}
+                                            indicatorColor="primary"
+                                            textColor="primary"
+                                            variant="fullWidth"
+                                        >
+                                            <Tab label="Vitals"/>
+                                            <Tab label="Location"/>
+                                        </Tabs>
+                                    </Grid>
                                     <Grid item xs={3}>
                                         <Typography variant="h6" gutterBottom>Name: {this.props.info.name}</Typography>
                                     </Grid>
@@ -319,8 +357,30 @@ class PatientInfo2 extends Component {
                                     <Grid item xs={3}>
                                         <Typography variant="h6" gutterBottom>Bed {this.props.info.bed.id}</Typography>
                                     </Grid>
-                                    <Grid item xs={12}> <ConnectedPlaybackMode/> </Grid>
-                                </Grid>
+                                    {this.state.tab == 0 ?
+                                        <Grid item xs={12}>
+                                            <div className={classes.toggleContainer}>
+                                                <ToggleButtonGroup value={this.state.chartMode} exclusive
+                                                                    onChange={this.handleFormat}>
+                                                    <ToggleButton value="live">Live</ToggleButton>
+                                                    <ToggleButton value="playback">Playback</ToggleButton>
+                                                </ToggleButtonGroup>
+                                            </div>
+                                            {this.state.chartMode == 'playback' ? <ConnectedPlaybackMode/> : <LiveDisplay acc={this.state.acc} hr={this.state.heartrate}/>}
+                                        </Grid>
+                                            
+                                        : 
+                                        
+                                        <Grid item xs={12}>
+                                            <div className={classes.toggleContainer}>
+                                                <ToggleButtonGroup value={this.state.mapMode} exclusive
+                                                                    onChange={this.handleMapFormat}>
+                                                    <ToggleButton value="live">Live</ToggleButton>
+                                                    <ToggleButton value="playback">Playback</ToggleButton>
+                                                </ToggleButtonGroup>
+                                            </div>
+                                            {this.state.mapMode == 'live' ? <InfoMap/> : <PlaybackMapMode/>}
+                                        </Grid>}
                             </CardContent>
                         </Card>
                         <Button size="small" onClick={this.goBack} variant="contained" color="primary" style={{margin: '2em'}}>

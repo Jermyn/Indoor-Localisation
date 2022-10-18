@@ -7,13 +7,13 @@ import Typography from '@material-ui/core/Typography';
 import Toolbar from '@material-ui/core/Toolbar';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from "react-redux";
-import { addUsername, fetchEcgVitals, fetchHeartrateVitals } from "./actions/index";
+import { addUsername, fetchEcgVitals, fetchHeartrateVitals } from "../../actions/index"
 import Card from '@material-ui/core/Card';
 import CardMedia from '@material-ui/core/CardMedia';
 import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import TemporaryDrawer from './TemporaryDrawer';
+// import TemporaryDrawer from './TemporaryDrawer';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import AddIcon from '@material-ui/icons/Add';
@@ -39,7 +39,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import HealthChart from "./HealthChart";
+// import HealthChart from "./HealthChart";
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
@@ -49,9 +49,9 @@ import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import axios from 'axios'
-import PlaybackChart from './PlaybackChart'
-import PlaybackEcgChart from './PlaybackEcgChart'
-import PlaybackRespirationChart from './PlaybackRespirationChart'
+// import PlaybackChart from './PlaybackChart'
+// import PlaybackEcgChart from './PlaybackEcgChart'
+// import PlaybackRespirationChart from './PlaybackRespirationChart'
 import PlaybackMap from './PlaybackMap'
 import moment from 'moment';
 
@@ -175,8 +175,8 @@ class PlaybackMapMode extends Component {
       response: [],
       chartMode: ['live'],
       endpoint: "https://330f4015.ngrok.io",
-      startTime: '2021-12-06T00:00',
-      endTime: '2021-12-12T23:59',
+      startTime: '2021-12-16T09:00',
+      endTime: '2021-12-16T23:59',
       ecg: [],
       heartrate: [],
       zmq: []

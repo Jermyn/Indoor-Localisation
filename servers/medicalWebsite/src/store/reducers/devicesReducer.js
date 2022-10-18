@@ -39,10 +39,6 @@ module.exports = function(state = {
         beacon: action.payload
       });
     default:
-      // when FETCH_BEACON_LOCATIONS
-      //   Object.assign {}, state, {
-      //     beaconLogs: action.payload.aggregations.id.buckets.map (x) -> x.latest.hits.hits
-      //   }
       return state;
   }
 };

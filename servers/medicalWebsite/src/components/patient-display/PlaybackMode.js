@@ -283,7 +283,7 @@ class PlaybackMode extends Component {
     }
 
     submitForm = () => {
-        this.submitQuery('vital', this.state.devices);
+        this.submitQuery('vital', this.state.devices[0]);
     }
 
     fetchData = () => {
@@ -318,6 +318,7 @@ class PlaybackMode extends Component {
 
     render() {
         const {classes} = this.props;
+        console.log(this.state.devices)
         return (
             <div className={classes.root}>
                 {this.renderPlaybackForm()}
@@ -334,7 +335,7 @@ class PlaybackMode extends Component {
                         </div>
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
-                <ExpansionPanel defaultExpanded={true}>
+                {/* <ExpansionPanel defaultExpanded={true}>
                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon/>}>
                         <Typography variant="subtitle1" gutterBottom>SpO2</Typography>
                     </ExpansionPanelSummary>
@@ -345,7 +346,7 @@ class PlaybackMode extends Component {
                                            end={moment(this.state.endTime, 'YYYY-MM-DDThh:mm')}/>
                         </div>
                     </ExpansionPanelDetails>
-                </ExpansionPanel>
+                </ExpansionPanel> */}
             </div>
         )
     }
