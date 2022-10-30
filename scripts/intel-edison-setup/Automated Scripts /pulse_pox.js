@@ -1,12 +1,12 @@
 noble = require('noble');
-zmq = require('zeromq');
+zmq = require('zmq');
 config = require('./configs/aws_config.json');
 log = require('./log.js')
 _ = require ('underscore')
 Rx = require('rxjs/Rx')
 exec = require('child_process').exec;
 Promise = require('bluebird');
-// Blinkt = require('node-blinkt');
+Blinkt = require('node-blinkt');
 ibeacon   = require('./iBeacon.js')
 //fs = require('graceful-fs');
 
@@ -19,22 +19,11 @@ var poxid = {}
 var timers = {}
 var waitlist = []
 
-var graphqlUrl = "http://52.77.184.100:3000/graphql"
-// serviceUuid = '6e400001b5a3f393e0a9e50e24dcca9e';
-// characteristicUuid = '6e400003b5a3f393e0a9e50e24dcca9e'; // pox
+serviceUuid = '6e400001b5a3f393e0a9e50e24dcca9e';
+characteristicUuid = '6e400003b5a3f393e0a9e50e24dcca9e';
 // serviceUuid = '180d'
-// characteristicUuid = '2a37' // heartrate
-// serviceUuid = 'fff0'
-// characteristicUuid = 'fff1' // homerehab
+// characteristicUuid = '2a37'
 beaconUuid = '77777777777777777777777777777777';
-serviceUuid = {
-  'heartrate': '180d',
-  'imu': 'fff0'
-}
-characteristicUuid = {
-  '180d': '2a37',
-  'fff0': 'fff1'
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // SOCKETS
@@ -49,11 +38,6 @@ sms = zmq.socket('push');
 sms.setsockopt(zmq.ZMQ_SNDHWM, 2000);
 sms.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
 sms.connect(config.zmqSockets.sms.pushpull); //vitals is for sms
-
-firebase = zmq.socket('push');
-firebase.setsockopt(zmq.ZMQ_SNDHWM, 2000);
-firebase.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
-firebase.connect(config.zmqSockets.firebase.pushpull); //This is for firebase
 
 battery = zmq.socket('push');
 battery.setsockopt(zmq.ZMQ_SNDHWM, 2000);
@@ -72,17 +56,15 @@ rawData.connect(config.zmqSockets.rawData.pushpull);
 
 notify = zmq.socket('pub');
 notify.connect(config.zmqSockets.broker.xsub);
-notify.setsockopt(zmq.ZMQ_RECONNECT_IVL, 100)
-notify.monitor(3000);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // LED
 /////////////////////////////////////////////////////////////////////////////////////////////// 
-// pixels = [null, null, null, null, null, null, null, null]; // max 8 pixels
-// leds = new Blinkt();
-// leds.setup();
-// leds.clearAll();
-// leds.sendUpdate();
+pixels = [null, null, null, null, null, null, null, null]; // max 8 pixels
+leds = new Blinkt();
+leds.setup();
+leds.clearAll();
+leds.sendUpdate();
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // PULSE OXIMETER HEADERS
@@ -130,7 +112,6 @@ var battery_read_count = 0;
 scheduleReset$  = Rx.Observable.timer(3600000);
 updateSyslog$  = Rx.Observable.timer(1000, 60000);
 anchorRequest$ = Rx.Observable.timer(2000);
-anchorLocation$ = Rx.Observable.timer(2500);
 _anchorStatus$ = new Rx.Subject();
 _rawData$ = new Rx.Subject();
 anchorStatus$  = Rx.Observable.merge(_anchorStatus$, Rx.Observable.timer(3000, 900000));
@@ -142,7 +123,7 @@ discover$      = Rx.Observable.fromEvent(noble, 'discover');
 _macBeacons$ = __macBeacons$.share();
 
 macBeacons$ = _macBeacons$.filter(function(b) {
-  return (b.advertisement.serviceUuids[0] === 'fff0' || b.advertisement.serviceUuids[0] === '180d') && (b.advertisement.localName === 'HomeRehabSensorLimb' || b.advertisement.localName === 'RHYTHM+');;
+  return b
 }).map(function(b) {
   return {
     transmitterId: b.advertisement.localName,
@@ -151,18 +132,17 @@ macBeacons$ = _macBeacons$.filter(function(b) {
   };
 });
 iBeacons$ = _iBeacons$.map(ibeacon.toBeacon).filter(function(b) {
-  return b.uuid === '77777777777777777777777777777777' && (b.major === 2 || b.major === 3);
+  return b.uuid === '77777777777777777777777777777777';
 }).map(function(b) {
   return {
     transmitterId: 'b' + b.minor.toString(),
     receiverId: env.anchor,
-    transmitterName: env.host,
     rssi: b.rssi
   };
 });
 beacons$ = Rx.Observable.merge(iBeacons$, macBeacons$);
 gattBeacons$ = _macBeacons$.filter(function(peripheral) {
-  return peripheral.state === 'disconnected' && (peripheral.advertisement.serviceUuids[0] === 'fff0' || peripheral.advertisement.serviceUuids[0] === '180d')  && (peripheral.advertisement.localName === 'HomeRehabSensorLimb' || peripheral.advertisement.localName === 'RHYTHM+');;;
+  return peripheral.state === 'disconnected';
 }).share();
 nobleConnect$  = Rx.Observable.fromEvent(noble._bindings, 'connect');
 nobleDisconnect$ = Rx.Observable.fromEvent(noble._bindings, 'disconnect');
@@ -181,18 +161,6 @@ socketConnect$ = Rx.Observable.fromEvent(vitals, 'connect', function(fd, ep) {
 socketRetry$ = Rx.Observable.fromEvent(vitals, 'connect_retry', function(fd, ep) {
   return [fd, ep];
 });
-notificationConnect$ = Rx.Observable.fromEvent(notify, 'connect', function(fd, ep) {
-  return [fd, ep];
-});
-notificationRetry$ = Rx.Observable.fromEvent(notify, 'connect_retry', function(fd, ep) {
-  return [fd, ep];
-});
-notificationDelay$ = Rx.Observable.fromEvent(notify, 'connect_delay', function(fd, ep) {
-  return [fd, ep];
-});
-notificationDisconnect$ = Rx.Observable.fromEvent(notify, 'disconnect', function(fd, ep) {
-  return [fd, ep];
-});
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // FUNCTIONS
@@ -207,17 +175,6 @@ execAsync = function(command) {
       }
     });
   });
-};
-
-request = function ({query}) {
-    return axios({
-        method: 'post',
-        url: `${graphqlUrl}`,
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({query})
-    });
 };
 
 updateSyslog = function() {
@@ -282,27 +239,14 @@ anchorStatus = function() {
   data = {
     syslog,
     anchorId: env.anchor,
-    hostname: env.host,
     gatts: {
       connected: connectedPeripherals().map(function({uuid}) {
         return uuid;
       })
     },
   };
-  // notify.connect(config.zmqSockets.broker.xsub); // re-connect socket
-  return notify.send([config.notifications.anchorStatus, JSON.stringify(data)]);
-};
-
-sendIPAddress = function() {
-  var data;
-  data = {
-    ip: env.ip,
-    anchorId: env.anchor,
-    hostname: env.host,
-  };
-  return ipAddress.send(JSON.stringify(data))
   //notify.connect(config.zmqSockets.broker.xsub); // re-connect socket
-  // return notify.send([config.notifications.anchorStatus, JSON.stringify(data)]);
+  return notify.send([config.notifications.anchorStatus, JSON.stringify(data)]);
 };
 
 attemptDiscoverServices = function(peripheral, uuids) {
@@ -504,40 +448,6 @@ readHRPacket = function (buffer)
   return {type: 'hr_raw', hr:HRData}
 }
 
-readACCPacket = function (buffer)
-{
-  data = buffer.toJSON(buffer)
-  ts0 = data['data'][2] & 0x0f;
-  ts1 = data['data'][4] & 0x0f;
-  ts2 = data['data'][6] & 0x0f;
-  ts3 = (data['data'][8] & 0xf0) >> 4;
-  ts4 = (data['data'][10] & 0xf0) >> 4;
-  ts5 = (data['data'][12] & 0xf0) >> 4;
-  timestamp = ts0 | (ts1<<4) | (ts2 <<8) | (ts3 << 12) | (ts4 << 16) | (ts5 << 20);
-  
-  ax = (data['data'][2] & 0xf0) | (data['data'][3] << 8);
-  ay = (data['data'][4] & 0xf0) | (data['data'][5] << 8);
-  az = (data['data'][6] & 0xf0) | (data['data'][7] << 8);
-  accX =(ax + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
-  accY =(ay + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
-  accZ =(az + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
-  
-  // mx = ((data['data'][8] & 0x0f)<<8 | data['data'][9])<<4
-  // my = ((data['data'][10] & 0x0f)<<8 | data['data'][11])<<4
-  // mz = ((data['data'][12] & 0x0f)<<8 | data['data'][13])<<4
-  // magX =(mx + 2**15) % 2**16 - 2**15
-  // magY =(my + 2**15) % 2**16 - 2**15
-  // magZ =(mz + 2**15) % 2**16 - 2**15
-  
-  // gx = data['data'][14]<<8 | data['data'][15]
-  // gy = data['data'][16]<<8 | data['data'][17]
-  // gz = data['data'][18]<<8 | data['data'][19]
-  // gyroX =(gx + 2**15) % 2**16 - 2**15
-  // gyroY =(gy + 2**15) % 2**16 - 2**15
-  // gyroZ =(gz + 2**15) % 2**16 - 2**15
-  return {type: 'acc_raw', accX:accX, accY: accY, accZ: accZ, time: timestamp}
-}
-
 // saveToFile = function(filename, data)
 // {
 //   var logStream = fs.createWriteStream('/home/pi/node_client/logs/' + filename + '.txt', {flags: 'a'});
@@ -568,7 +478,7 @@ execAsync('hciconfig hci0 reset');
 noble$.subscribe(function(res) {
   if (res === 'poweredOn') {
     console.log('hci', res, 'start scanning');
-    noble.startScanning([], true);
+    noble.startScanning([serviceUuid], true);
   } else {
     console.log('hci', res, 'stop scanning');
     noble.stopScanning();
@@ -584,47 +494,22 @@ anchorStatus$.subscribe(function() {
   return anchorStatus();
 });
 
-// ip_subscriber$.subscribe(function() {
-//   console.log("Sending ip to server...")
-//   return sendIPAddress();
-// })
-
-anchorLocation$.subscribe(function() {
-  request({query}).then(function ({data}) {
-    let devices = data.data.devices
-    devices.filter(function(dev) {
-      return (dev.type == 'static' && dev.id == env.host)
-    }).map(function(dev) {
-      return {
-        map: dev.location.map.id
-      }
-    })
-  }).catch(function(error) {
-    console.log (error)
-  })
-})
-
 anchorRequest$.subscribe(function() {  
-  let anchor = syslog.address.replace(/:/g,'').replace(/\n/g, '');
-  let host = syslog.host
-  let query = `query { devices { id type location } }`
-  env.anchor = anchor; // anchor mac address
-  env.host = host //rpi27 for e.g
+  let anchor = syslog.address.replace(/:/g,'').replace(/\n/g, '');  
+  env.anchor = anchor; // anchor mac address  
 });
 
 // _rawData$.subscribe (function(data) {
 //   return sendRawData(data)
 // }
 
-beacons$.subscribe(function({transmitterId, transmitterName, receiverId, rssi}) {
+beacons$.subscribe(function({transmitterId, receiverId, rssi}) {
   var time;
   time = (new Date()).getTime();
   console.log ("Sending raw rssi packets...")
-  // console.log(rssi, transmitterId)
   var message = {
     time: time,
     gattid: transmitterId,
-    gattName: transmitterName,
     anchorId: receiverId,
     rssi: rssi,
     tags: 'rawRSSI'
@@ -650,15 +535,16 @@ nobleConnect$.subscribe(function(uuid) {
   peripheral = noble._peripherals[uuid];
   poxid[`${uuid}`] = peripheral.id; // gatt mac address
   console.log(`connected to peripheral ${peripheral.id}`);
-  // addPixel(uuid);
+  // console.log (peripheral)
+  addPixel(uuid);
   /*if(connectedPeripherals().length == 1) {
     console.log ("re-connecting data sockets");
     anchorData.connect(config.zmqSockets.anchorData.pushpull); // re-connect sockets
     vitals.connect(config.zmqSockets.vitals.pushpull);
   }*/
   noble.stopScanning(); // reset scanning, required for raspberry pi
-  noble.startScanning([], true);
-  return attemptDiscoverServices(peripheral, peripheral.advertisement.serviceUuids[0])
+  noble.startScanning(serviceUuid, true);
+  return attemptDiscoverServices(peripheral, serviceUuid)
 });
 
 nobleServices$.subscribe(function([peripheralUuid, serviceUuids]) {
@@ -666,7 +552,7 @@ nobleServices$.subscribe(function([peripheralUuid, serviceUuids]) {
   console.log(`discovered services for ${peripheralUuid}`);
   services = noble._services[peripheralUuid];
   return serviceUuids.forEach(function(uuid) {
-    services[uuid].discoverCharacteristics(characteristicUuid[uuid])
+    services[uuid].discoverCharacteristics(characteristicUuid)
   });
 });
 
@@ -675,9 +561,9 @@ nobleCharacteristics$.subscribe(function([peripheralUuid, serviceUuid, character
   console.log(`discovered characteristics for ${peripheralUuid}`);
   characteristics = noble._characteristics[peripheralUuid][serviceUuid];
   return characteristicsDesc.forEach(function({uuid}) {
-    if (uuid === characteristicUuid[serviceUuid]) {                  
+    if (uuid === characteristicUuid) {                     
       characteristics[uuid].subscribe(function(error) {
-        console.log ("subscribed to characteristic for " + peripheralUuid);              
+        console.log ("subscribed to characteristic for " + peripheralUuid);                
       });
     }
   });
@@ -709,11 +595,7 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
   var buffer = Buffer.from(data);
 //   //saveToFile(poxid[`${peripheralUuid}`], buffer.toString('hex'));
 //   // poxid[`${peripheralUuid}`] // month day hour
-  if (serviceUuid == 'fff0') {
-    var output = readACCPacket(buffer);
-  } else if (serviceUuid === '180d') {
-    var output = readHRPacket(buffer)
-  }
+  var output = readPoxData(buffer);
   
   if (output.type == 'data_vitals') 
   {
@@ -731,49 +613,11 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
         anchorId:       env.anchor,
         tags:           'instantaneous'
       };
-      // updatePixel(peripheralUuid, 'green', output.perf); // change green color level based on measurement quality
+      updatePixel(peripheralUuid, 'green', output.perf); // change green color level based on measurement quality
       vitals.send(JSON.stringify(message));  
       return sms.send(JSON.stringify(message));
 //       return anchorData.send(JSON.stringify(message)); 
     }
-  }
-
-  if (output.type == 'acc_raw')
-  {
-    console.log('data from ' + poxid[`${peripheralUuid}`] + '. accX: ' + output.accX + 
-        ', accY: ' + output.accY + ', accZ: ' + output.accZ + ', anchorid: ' + env.anchor);
-
-    var message = 
-    {
-      gattid:         poxid[`${peripheralUuid}`],
-      accX:           output.accX,
-      accY:           output.accY,
-      accZ:           output.accZ,
-      device:         'imu',
-      // time:           output.time,
-      anchorId:       env.anchor,
-      tags:           'instantaneous'
-    };
-
-    firebase.send(JSON.stringify(message));
-    return vitals.send(JSON.stringify(message));
-  }
-
-  if (output.type == 'hr_raw')
-  {
-    console.log ('data from ' + poxid[`${peripheralUuid}`] + '. hr: ' + output.hr + ', anchorId: ' + env.anchor);
-
-    var message = 
-    {
-      gattid:           poxid[`${peripheralUuid}`],
-      data:             output.hr,
-      anchorId:         env.anchor,
-      device:           'hr',
-      tags:             'instantaneous'    
-    };
-
-    firebase.send(JSON.stringify(message));
-    return vitals.send(JSON.stringify(message));
   }
 
   // if (output.type == 'data_raw') 
@@ -839,7 +683,7 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
       anchorId:             env.anchor,
       tags:                 'final'
     };
-    // updatePixel(peripheralUuid, 'red', 0); // The measurement procedure is finished
+    updatePixel(peripheralUuid, 'red', 0); // The measurement procedure is finished
     vitals.send(JSON.stringify(message));
     return sms.send(JSON.stringify(message));
 //     return finalReading.send(JSON.stringify(message));   
@@ -859,7 +703,7 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
     };
 
     vitals.send(JSON.stringify(message));
-    // updatePixel(peripheralUuid, 'red', 0); // The measurement procedure is finished
+    updatePixel(peripheralUuid, 'red', 0); // The measurement procedure is finished
     sms.send(JSON.stringify(message));
 //     //anchorData.send(JSON.stringify(message));  
 
@@ -1002,13 +846,12 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
 
 nobleDisconnect$.subscribe(function(uuid) {  
   clearTimeout(timers[uuid]); // kill delayed connections
-  noble.startScanning([], true);
-  // removePixel(uuid);  
-  // if(connectedPeripherals().length == 0) { //last disconnect
-  //   leds.setup();
-  //   leds.clearAll();
-  //   leds.sendUpdate();
-  // }
+  removePixel(uuid);  
+  if(connectedPeripherals().length == 0) { //last disconnect
+    leds.setup();
+    leds.clearAll();
+    leds.sendUpdate();
+  }
   //var ddd = new Date(); // save disconnetion time to the log file:
   //saveToFile(`${uuid}`, ddd.toISOString() + ' disconnected... \n\n\n\n');
   return console.log(`${uuid} disconnected`);
@@ -1021,23 +864,6 @@ socketConnect$.subscribe(function([fd, ep]) {
 
 socketRetry$.subscribe(function([fd, ep]) {  
   console.log('data socket retrying connection to', ep);
-});
-
-notificationDelay$.subscribe(function([fd,ep]) {
-  console.log('notification server socket connect delay', ep, new Date());
-});
-
-notificationDisconnect$.subscribe(function([fd,ep]) {
-  console.log('notification server socket disconnected', ep, new Date());
-});
-
-notificationRetry$.subscribe(function([fd,ep]) {
-  console.log('notification server socket retrying connection to', ep, new Date());
-  _anchorStatus$.next()
-});
-
-notificationConnect$.subscribe(function([fd,ep]) {
-  console.log('notification server socket connected to', ep);
 });
 
 scheduleReset$.subscribe(function() {

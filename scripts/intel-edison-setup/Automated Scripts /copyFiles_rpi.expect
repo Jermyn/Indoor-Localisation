@@ -1,5 +1,6 @@
 #!/usr/local/bin/expect
 log_user 1 
+set ROOT	root
 set USR     pi
 set PASSWD  snickers
 set f [open "pssh_hosts.txt"]
@@ -10,81 +11,89 @@ close $f
 foreach host $hosts {
 	spawn sftp ${USR}@$host
 	expect {
-	  "password:" {
-	    send "$PASSWD\r"
-	    expect ":"
-  	}
-  	"(yes/no)?" {
-	    send "yes\r"
-	    expect "password:" {
-	      send "$PASSWD\r"
-	      expect ":"
-    	}
-  	}
+		"(yes/no)?" {
+		    send "yes\r"
+		    expect "password:" {
+		      send "$PASSWD\r"
+		      expect ":"
+    		}
+  		}	
+		  "password:" {
+		    send "$PASSWD\r"
+		    expect ":"
+	  	}
+  	
 	}
 	expect "sftp> "
 	send "cd node_client \r" 
 	expect "sftp> "
 	send "put pulse.js \r"
-	#expect "sftp> "
-	#send "put log.js \r" 
-	#expect "sftp> "
-	#send "cd configs \r"
-	#expect "sftp> "
-	#send "put aws_config.json \r"
-	# send "put uninstall.sh \r" 
 	expect "sftp> "
+	send "put log.js \r" 
+	expect "sftp> "
+	send "cd configs \r"
+	expect "sftp> "
+	send "put aws_config.json \r"
+	# send "put uninstall.sh \r" 
+	# expect "sftp> "
 	send "bye \r"
 	expect eof
 	
-	# spawn ssh ${USR}@$host
-	# expect {
+	#spawn ssh ${USR}@$host
+	#expect {
 	#   "password:" {
 	#     send "$PASSWD\r"
 	#     expect ":"
- #  		}
- #  		"(yes/no)?" {
+   	#	}
+   	#	"(yes/no)?" {
 	# 	    send "yes\r"
 	# 	    expect "password:" {
 	# 	      send "$PASSWD\r"
 	# 	      expect ":"
 	#     	}
- #  		}
+   	#	}
 	# }
+	#send "sudo su \r"
+	#expect ">"
+	#send "cp ./wpa_supplicant.conf /etc/wpa_supplicant/ \r"
+	#expect ">"
+	#send "exit\r"
+	#send "sudo systemctl restart pulse \r"
+	#expect ":"
 	# send "cd node_client\r"
 	# send "sudo cp services/localize.service    /etc/systemd/system\r"
 	# send "sudo systemctl daemon-reload\r"
 	# send "sudo systemctl restart localize\r"
 	# expect ":"
 	# puts "leaving rpi..."
-	# send "exit\r"
-	# expect ">"
+	#send "exit\r"
+	#expect ">"
 }
 
 ##Send wpa_supplicant file
-# foreach host $hosts {
-# 	spawn sftp ${USR}@$host
-# 	expect {
-# 	  "password:" {
-# 	    send "$PASSWD\r"
-# 	    expect ":"
-#   	}
-#   		"(yes/no)?" {
-# 		    send "yes\r"
-# 		    expect "password:" {
-# 		      send "$PASSWD\r"
-# 		      expect ":"
-#     		}
-#   		}
-# 	}
-# 	expect "sftp>"
-# 	send "cd /etc/wpa_supplicant/ \r" 
-# 	expect "sftp> "
-# 	send "put ./wpa_supplicant.conf \r" 
-# 	expect "sftp> "
+ #foreach host $hosts {
+ #	spawn sftp ${USR}@$host
+ #	expect {
+ #	  "password:" {
+ #	    send "$PASSWD\r"
+ #	    expect ":"
+ #  	}
+ #  		"(yes/no)?" {
+ #		    send "yes\r"
+ #		    expect "password:" {
+ #		      send "$PASSWD\r"
+ #		      expect ":"
+ #    		}
+ #  		}
+ #	}
+ #	expect "sftp>"
+ #	send "cd /etc/wpa_supplicant/ \r" 
+ #	expect "sftp> "
+ #	send "put ./wpa_supplicant.conf \r"
+ #	expect "sftp> "
 # 	send "bye \r"
 # 	expect eof
-# }
+ #}
 
 ##mass shutdown
 # foreach host $hosts {

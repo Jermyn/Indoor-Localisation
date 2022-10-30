@@ -12,6 +12,8 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from operator import itemgetter
 from pprint import PrettyPrinter
+from storeScale import getScale, getCoordinates
+from storePOI import getNavMesh, getPOI
 
 pp = PrettyPrinter(indent=2)
 
@@ -40,11 +42,15 @@ notify.connect(config['zmqSockets']['broker']['xsub'])
 ## State
 ####################################################################################
 
-location = 'actlab'
+location = 'Walkway_to_B_test'
 cache         = {}
+cache_mesh = getNavMesh(location)
+cache_POI = getPOI(location)
 history       = defaultdict(lambda: {})
-deviceId = 'b1'
+deviceId = 'original'
 sysStartTime = time.time()*1000
+checkpoints = { '1': [0,0], '2': [1,0], '3': [1,1], '4': [0,1], '5': [2,0], '6': [2,1], '7': [2,2], '8': [3,0], '9': [3,1], '10': [3,2]}
+# print ("Experiment Start:", sysStartTime, datetime.fromtimestamp(int(sysStartTime).strftime("%Y-%m-%d %H:%M:%S")))
 ####################################################################################
 ## UTILITIES
 ####################################################################################
@@ -172,6 +178,97 @@ def transmitterLocations(transmitters):
 def distance(a, b, scale):
   return scale * np.linalg.norm(a - b)
 
+def findMinimum_Distance_Point(min_poly_points, point):
+  i=0
+  minimum_dist = 999
+  tmp_dist = 0
+  tmp_coord = []
+  while i<len(min_poly_points):
+    # print (min_poly_points[i])
+    tmp_dist = point.distance(Point(min_poly_points[i]))
+    if tmp_dist < minimum_dist:
+      minimum_dist = tmp_dist
+      tmp_coord = min_poly_points[i]
+    i+=1
+  return tmp_coord
+
+def findDiagonalPoint(min_poly, point):
+  min_poly_points = list(min_poly.exterior.coords)
+  return findMinimum_Distance_Point(min_poly_points, point)
+
+def findWherePointIs(min_poly, point):
+  boundingCoords = min_poly.bounds
+  if (point.y >= boundingCoords[1] and point.y <= boundingCoords[3]): #either left or right of polygon
+    return 'horizontal'
+  elif (point.x >= boundingCoords[0] and point.x <= boundingCoords[2]): #either top or bottom of polygon
+    return 'vertical'
+  else: #diagonally away from the polygon
+    return 'diagonal'
+
+def checkBoundary(lng, lat):
+  global cache_mesh
+  i = 0
+  contains = []
+  point = Point(lng, lat)
+  while i< len(cache_mesh['map']['navMesh']['features']):
+    pt1 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][0]
+    pt2 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][1]
+    pt3 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][2]
+    pt4 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][3]
+    polygon = Polygon([pt1, pt2, pt3, pt4])
+    contains.append(polygon.contains(point))
+    i+=1
+  return contains, point
+
+def shiftPtToSide(point, deviceId):
+  global cache_mesh, history
+  i = 0
+  polys = []
+  while i< len(cache_mesh['map']['navMesh']['features']):
+    pt1 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][0]
+    pt2 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][1]
+    pt3 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][2]
+    pt4 = cache_mesh['map']['navMesh']['features'][i]['geometry']['coordinates'][0][3]
+    polys.append(Polygon([pt1, pt2, pt3, pt4]))
+    i+=1
+  min_poly = min(polys, key=point.distance)
+  # print (min_poly, min_poly.bounds, list(min_poly.exterior.coords))
+  point_orientation = findWherePointIs(min_poly, point)
+  print (point_orientation)
+  try:
+    if polys.index(min_poly) == history[deviceId]['polygon']: #prev pos is in the same polygon
+      if point_orientation == 'horizontal':
+        return [history[deviceId]['location']['lng'], point.y]
+      elif point_orientation == 'vertical':
+        return [point.x , history[deviceId]['location']['lat']]
+      else:
+        return findDiagonalPoint(min_poly, point)
+    else: #first point to be in polygon
+      history[deviceId]['polygon'] = polys.index(min_poly)
+      return findDiagonalPoint(min_poly, point)
+  except KeyError:
+    return [point.x, point.y]
+
+def determineTrend(lng,lat):
+  global history
+  trend = ''
+  change_lng = lng - history[deviceId]['location']['lng']
+  change_lat = lat - history[deviceId]['location']['lat']
+  if change_lng == max(change_lat,change_lng):
+    if change_lng < 0:
+      trend = 'left'
+    elif change_lng > 0:
+      trend = 'right'
+    else: trend = 'no change'
+    return trend, change_lng
+  else:
+    if change_lat < 0:
+      trend = 'down'
+    elif change_lat > 0:
+      trend = 'up'
+    else: trend = 'no change'
+    return trend, change_lat
+
 def updateLocations(locations, delta):
   global history
   updates = set()
@@ -197,36 +294,37 @@ def between_decimals(min, max):
   return random.uniform(min, max)
 
 
-def processEdges(interval):
+def processEdges(interval, POI):
+  direction = ''
   now           = int(time.time() * 1000)
   try:
     _map = {
         "id": location,
           "coordinates": [
           [
-            -0.11997600023306632,
-            0.2390170498225217
+            -0.5231213479707435,
+            1.342988006344001
           ],
           [
-            0.36101917799351213,
-            0.2390170498225217
+            2.422659711427116,
+            1.342988006344001
           ],
           [
-            0.36101917799351213,
-            -0.028774003760801747
+            2.422659711427116,
+            -0.7311312595476522
           ],
           [
-            -0.11997600023306632,
-            -0.028774003760801747
+            -0.5231213479707435,
+            -0.7311312595476522
           ]
         ],
-        "scale": 52
+        "scale": 157
     }
 
-    lng = between_decimals(-0.11997600023306632,0.36101917799351213)
-    lat = between_decimals(-0.028774003760801747,0.2390170498225217)
+    lng = POI['lng']
+    lat = POI['lat']
 
-    deviceId = 'b1'
+    deviceId = 'original'
 
     print ("Sending position data...")
     topic = config['notifications']['positionUpdate']
@@ -238,6 +336,45 @@ def processEdges(interval):
         'time':   now
       })
     print (message)
+    notify.send_multipart([topic.encode('utf-8'), message.encode('utf-8')])
+    print ('================================================================')
+    if history[deviceId] != {}: direction, change_pos = determineTrend(lng,lat)
+    # for deviceId in updates:
+    inObstacle, pos = checkBoundary(lng, lat)
+    print (inObstacle)
+    if True not in inObstacle:
+      shiftedPos = shiftPtToSide(pos, deviceId)
+      history[deviceId].update({
+          'location': {
+            'map': _map,
+            'lat': shiftedPos[1],
+            'lng': shiftedPos[0]
+          },
+          'inPolygon': False,
+          # 'direction': direction
+      })
+    else:
+      history[deviceId].update({
+          'location': {
+            'map': _map,
+            'lat': lat,
+            'lng': lng
+          },
+          'inPolygon': True,
+          # 'direction': direction,
+          'polygon': inObstacle.index(True)
+      })
+    print ("Sending position data...")
+    topic = config['notifications']['positionUpdate']
+    message = json.dumps({
+        'id':     'shifted',
+        'lng':    history[deviceId]['location']['lng'],
+        'lat':    history[deviceId]['location']['lat'],
+        'map':    history[deviceId]['location']['map'],
+        # 'distance': 1,
+        'time':   now
+      })
+    print (message) 
     notify.send_multipart([topic.encode('utf-8'), message.encode('utf-8')])
     print ('================================================================')
   except: raise
@@ -255,6 +392,7 @@ def listenForCacheUpdates():
       updateCache()
 
 def main():
+  global cache_POI
   interval = 2000
   i = 0
   start = sysStartTime
@@ -264,7 +402,7 @@ def main():
     while math.floor(timer-start) == 5:
       start+=interval
       try:
-          processEdges(interval*1000)
+          processEdges(interval*1000, cache_POI[str(i+1)])
           timer = time.time()*1000
       except:
         raise

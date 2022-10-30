@@ -24,6 +24,12 @@
      "analysis": {
       "pushpull":             "tcp://52.77.184.100:5560"
     },
+    "firebase": {
+      "pushpull":             "tcp://52.77.184.100:5561"
+    },
+    "ipAddress": {
+      "pushpull":             "tcp://52.77.184.100:5563"
+    },
     "broker": {
       "xpub":                 "tcp://52.77.184.100:5567",
       "xsub":                 "tcp://52.77.184.100:5568",

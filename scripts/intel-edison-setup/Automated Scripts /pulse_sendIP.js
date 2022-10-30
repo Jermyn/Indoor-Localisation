@@ -1,6 +1,6 @@
 noble = require('noble');
 zmq = require('zmq');
-config = require('./configs/config.json');
+config = require('./configs/aws_config.json');
 log = require('./log.js')
 _ = require ('underscore')
 Rx = require('rxjs/Rx')
@@ -19,23 +19,40 @@ var poxid = {}
 var timers = {}
 var waitlist = []
 
-serviceUuid = '6e400001b5a3f393e0a9e50e24dcca9e';
-characteristicUuid = '6e400003b5a3f393e0a9e50e24dcca9e';
+// serviceUuid = '6e400001b5a3f393e0a9e50e24dcca9e';
+// characteristicUuid = '6e400003b5a3f393e0a9e50e24dcca9e'; // pox
+// serviceUuid = '180d'
+// characteristicUuid = '2a37' // heartrate
+// serviceUuid = 'fff0'
+// characteristicUuid = 'fff1' // homerehab
 beaconUuid = '77777777777777777777777777777777';
+serviceUuid = {
+  'heartrate': '180d',
+  'imu': 'fff0'
+}
+characteristicUuid = {
+  '180d': '2a37',
+  'fff0': 'fff1'
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // SOCKETS
 /////////////////////////////////////////////////////////////////////////////////////////////// 
-anchorData = zmq.socket('push');
-anchorData.setsockopt(zmq.ZMQ_SNDHWM, 2000);
-anchorData.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
-anchorData.connect(config.zmqSockets.anchorData.pushpull);
-anchorData.monitor(3000); // for debug
-
 vitals = zmq.socket('push');
 vitals.setsockopt(zmq.ZMQ_SNDHWM, 2000);
 vitals.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
-vitals.connect(config.zmqSockets.vitals.pushpull); //vitals is for sms
+vitals.connect(config.zmqSockets.vitals.pushpull);
+vitals.monitor(3000); // for debug
+
+sms = zmq.socket('push');
+sms.setsockopt(zmq.ZMQ_SNDHWM, 2000);
+sms.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
+sms.connect(config.zmqSockets.sms.pushpull); //vitals is for sms
+
+firebase = zmq.socket('push');
+firebase.setsockopt(zmq.ZMQ_SNDHWM, 2000);
+firebase.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
+firebase.connect(config.zmqSockets.firebase.pushpull); //This is for firebase
 
 battery = zmq.socket('push');
 battery.setsockopt(zmq.ZMQ_SNDHWM, 2000);
@@ -47,8 +64,19 @@ finalReading.setsockopt(zmq.ZMQ_SNDHWM, 2000);
 finalReading.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
 finalReading.connect(config.zmqSockets.finalReading.pushpull);
 
+rawData = zmq.socket('push')
+rawData.setsockopt(zmq.ZMQ_SNDHWM, 2000);
+rawData.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
+rawData.connect(config.zmqSockets.rawData.pushpull);
+
+ipAddress = zmq.socket('push')
+ipAddress.setsockopt(zmq.ZMQ_SNDHWM, 2000);
+ipAddress.setsockopt(zmq.ZMQ_TCP_KEEPALIVE, 1);
+ipAddress.connect(config.zmqSockets.ipAddress.pushpull);
+
 notify = zmq.socket('pub');
 notify.connect(config.zmqSockets.broker.xsub);
+notify.monitor(3000);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // LED
@@ -105,8 +133,11 @@ var battery_read_count = 0;
 scheduleReset$  = Rx.Observable.timer(3600000);
 updateSyslog$  = Rx.Observable.timer(1000, 60000);
 anchorRequest$ = Rx.Observable.timer(2000);
+_ipAddress$ = new Rx.Subject();
 _anchorStatus$ = new Rx.Subject();
+_rawData$ = new Rx.Subject();
 anchorStatus$  = Rx.Observable.merge(_anchorStatus$, Rx.Observable.timer(3000, 900000));
+ip_subscriber$  = Rx.Observable.merge(_ipAddress$, Rx.Observable.timer(0));
 noble$ = Rx.Observable.fromEvent(noble, 'stateChange');
 discover$      = Rx.Observable.fromEvent(noble, 'discover');
 [_iBeacons$, __macBeacons$] = discover$.partition(function(peripheral) {
@@ -115,7 +146,7 @@ discover$      = Rx.Observable.fromEvent(noble, 'discover');
 _macBeacons$ = __macBeacons$.share();
 
 macBeacons$ = _macBeacons$.filter(function(b) {
-  return b.advertisement.localName === 'RHYTHM+';
+  return (b.advertisement.serviceUuids[0] === 'fff0' || b.advertisement.serviceUuids[0] === '180d') && (b.advertisement.localName === 'HomeRehabSensorLimb' || b.advertisement.localName === 'RHYTHM+');;
 }).map(function(b) {
   return {
     transmitterId: b.advertisement.localName,
@@ -124,17 +155,18 @@ macBeacons$ = _macBeacons$.filter(function(b) {
   };
 });
 iBeacons$ = _iBeacons$.map(ibeacon.toBeacon).filter(function(b) {
-  return b.uuid === '77777777777777777777777777777777';
+  return b.uuid === '77777777777777777777777777777777' && (b.major === 2 || b.major === 3);
 }).map(function(b) {
   return {
     transmitterId: 'b' + b.minor.toString(),
     receiverId: env.anchor,
+    transmitterName: env.host,
     rssi: b.rssi
   };
 });
 beacons$ = Rx.Observable.merge(iBeacons$, macBeacons$);
 gattBeacons$ = _macBeacons$.filter(function(peripheral) {
-  return peripheral.state === 'disconnected' && peripheral.advertisement.localName === 'RHYTHM+';;
+  return peripheral.state === 'disconnected' && (peripheral.advertisement.serviceUuids[0] === 'fff0' || peripheral.advertisement.serviceUuids[0] === '180d')  && (peripheral.advertisement.localName === 'HomeRehabSensorLimb' || peripheral.advertisement.localName === 'RHYTHM+');;;
 }).share();
 nobleConnect$  = Rx.Observable.fromEvent(noble._bindings, 'connect');
 nobleDisconnect$ = Rx.Observable.fromEvent(noble._bindings, 'disconnect');
@@ -147,10 +179,16 @@ nobleCharacteristics$ = Rx.Observable.fromEvent(noble._bindings, 'characteristic
 nobleRead$ = Rx.Observable.fromEvent(noble._bindings, 'read', function(peripheralUuid, serviceUuid, characteristicUuid, data) {
   return [peripheralUuid, serviceUuid, characteristicUuid, data];
 });
-socketConnect$ = Rx.Observable.fromEvent(anchorData, 'connect', function(fd, ep) {
+socketConnect$ = Rx.Observable.fromEvent(vitals, 'connect', function(fd, ep) {
   return [fd, ep];
 });
-socketRetry$ = Rx.Observable.fromEvent(anchorData, 'connect_retry', function(fd, ep) {
+socketRetry$ = Rx.Observable.fromEvent(vitals, 'connect_retry', function(fd, ep) {
+  return [fd, ep];
+});
+notificationConnect$ = Rx.Observable.fromEvent(notify, 'connect', function(fd, ep) {
+  return [fd, ep];
+});
+notificationRetry$ = Rx.Observable.fromEvent(notify, 'connect_retry', function(fd, ep) {
   return [fd, ep];
 });
 
@@ -231,14 +269,27 @@ anchorStatus = function() {
   data = {
     syslog,
     anchorId: env.anchor,
+    hostname: env.host,
     gatts: {
       connected: connectedPeripherals().map(function({uuid}) {
         return uuid;
       })
     },
   };
-  //notify.connect(config.zmqSockets.broker.xsub); // re-connect socket
+  notify.connect(config.zmqSockets.broker.xsub); // re-connect socket
   return notify.send([config.notifications.anchorStatus, JSON.stringify(data)]);
+};
+
+sendIPAddress = function() {
+  var data;
+  data = {
+    ip: env.ip,
+    anchorId: env.anchor,
+    hostname: env.host,
+  };
+  return ipAddress.send(JSON.stringify(data))
+  //notify.connect(config.zmqSockets.broker.xsub); // re-connect socket
+  // return notify.send([config.notifications.anchorStatus, JSON.stringify(data)]);
 };
 
 attemptDiscoverServices = function(peripheral, uuids) {
@@ -282,8 +333,15 @@ sendBeaconData = function(data) {
 };
 
 sendRawData = function(data) {
-  console.log ("Raw Data...")
-  console.log (data)
+  console.log ("Sending Raw Data...")
+  var message = {
+    time: time,
+    gattid: transmitterId,
+    anchorId: receiverId,
+    rssi: rssi,
+    tags: 'rawRSSI'
+  };
+  return rawData.send(JSON.stringify(message));
 }
 
 ///////////////////*****************************************************/////////////////////////////////
@@ -426,6 +484,46 @@ readPoxPacketMultiple = function(buffer,indxVitals,indxRawDat,indxCountD)
   return {type:'unused'};
 };
 
+readHRPacket = function (buffer)
+{
+  data = buffer.toJSON(buffer)
+  HRData = data['data'][1] + Math.pow(2,15) % Math.pow(2,16) - Math.pow(2,15)
+  return {type: 'hr_raw', hr:HRData}
+}
+
+readACCPacket = function (buffer)
+{
+  data = buffer.toJSON(buffer)
+  ts0 = data['data'][2] & 0x0f;
+  ts1 = data['data'][4] & 0x0f;
+  ts2 = data['data'][6] & 0x0f;
+  ts3 = (data['data'][8] & 0xf0) >> 4;
+  ts4 = (data['data'][10] & 0xf0) >> 4;
+  ts5 = (data['data'][12] & 0xf0) >> 4;
+  timestamp = ts0 | (ts1<<4) | (ts2 <<8) | (ts3 << 12) | (ts4 << 16) | (ts5 << 20);
+  
+  ax = (data['data'][2] & 0xf0) | (data['data'][3] << 8);
+  ay = (data['data'][4] & 0xf0) | (data['data'][5] << 8);
+  az = (data['data'][6] & 0xf0) | (data['data'][7] << 8);
+  accX =(ax + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
+  accY =(ay + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
+  accZ =(az + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
+  
+  // mx = ((data['data'][8] & 0x0f)<<8 | data['data'][9])<<4
+  // my = ((data['data'][10] & 0x0f)<<8 | data['data'][11])<<4
+  // mz = ((data['data'][12] & 0x0f)<<8 | data['data'][13])<<4
+  // magX =(mx + 2**15) % 2**16 - 2**15
+  // magY =(my + 2**15) % 2**16 - 2**15
+  // magZ =(mz + 2**15) % 2**16 - 2**15
+  
+  // gx = data['data'][14]<<8 | data['data'][15]
+  // gy = data['data'][16]<<8 | data['data'][17]
+  // gz = data['data'][18]<<8 | data['data'][19]
+  // gyroX =(gx + 2**15) % 2**16 - 2**15
+  // gyroY =(gy + 2**15) % 2**16 - 2**15
+  // gyroZ =(gz + 2**15) % 2**16 - 2**15
+  return {type: 'acc_raw', accX:accX, accY: accY, accZ: accZ, time: timestamp}
+}
 
 // saveToFile = function(filename, data)
 // {
@@ -473,23 +571,38 @@ anchorStatus$.subscribe(function() {
   return anchorStatus();
 });
 
+ip_subscriber$.subscribe(function() {
+  console.log("Sending ip to server...")
+  return sendIPAddress();
+})
+
 anchorRequest$.subscribe(function() {  
-  let anchor = syslog.address.replace(/:/g,'').replace(/\n/g, '');  
-  env.anchor = anchor; // anchor mac address  
+  let anchor = syslog.address.replace(/:/g,'').replace(/\n/g, '');
+  let host = syslog.host
+  let ip = syslog.ip
+  env.anchor = anchor; // anchor mac address
+  env.host = host //rpi27 for e.g
+  env.ip = ip
 });
 
-beacons$.subscribe(function({transmitterId, receiverId, rssi}) {
+// _rawData$.subscribe (function(data) {
+//   return sendRawData(data)
+// }
+
+beacons$.subscribe(function({transmitterId, transmitterName, receiverId, rssi}) {
   var time;
   time = (new Date()).getTime();
   console.log ("Sending raw rssi packets...")
   var message = {
     time: time,
     gattid: transmitterId,
+    gattName: transmitterName,
     anchorId: receiverId,
     rssi: rssi,
     tags: 'rawRSSI'
   };
-  return vitals.send(JSON.stringify(message));
+  rawData.send(JSON.stringify(message));
+  return sms.send(JSON.stringify(message));
 });
 
 
@@ -516,17 +629,16 @@ nobleConnect$.subscribe(function(uuid) {
     vitals.connect(config.zmqSockets.vitals.pushpull);
   }*/
   noble.stopScanning(); // reset scanning, required for raspberry pi
-  noble.startScanning(serviceUuid, true);
-  return attemptDiscoverServices(peripheral, serviceUuid)
+  noble.startScanning([], true);
+  return attemptDiscoverServices(peripheral, peripheral.advertisement.serviceUuids[0])
 });
 
 nobleServices$.subscribe(function([peripheralUuid, serviceUuids]) {
   var services;
   console.log(`discovered services for ${peripheralUuid}`);
   services = noble._services[peripheralUuid];
-  console.log (services)
   return serviceUuids.forEach(function(uuid) {
-    services[uuid].discoverCharacteristics(characteristicUuid)
+    services[uuid].discoverCharacteristics(characteristicUuid[uuid])
   });
 });
 
@@ -535,9 +647,9 @@ nobleCharacteristics$.subscribe(function([peripheralUuid, serviceUuid, character
   console.log(`discovered characteristics for ${peripheralUuid}`);
   characteristics = noble._characteristics[peripheralUuid][serviceUuid];
   return characteristicsDesc.forEach(function({uuid}) {
-    if (uuid === characteristicUuid) {                     
+    if (uuid === characteristicUuid[serviceUuid]) {                  
       characteristics[uuid].subscribe(function(error) {
-        console.log ("subscribed to characteristic for " + peripheralUuid);                
+        console.log ("subscribed to characteristic for " + peripheralUuid);              
       });
     }
   });
@@ -547,13 +659,33 @@ nobleCharacteristics$.subscribe(function([peripheralUuid, serviceUuid, character
 
 ///////////////////*********** DATA UPLOAD ***************/////////////////////////////////
 
+// nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, data]) 
+// {
+//   output = readHRPacket(data)
+//   var message = 
+//   {
+//     gattid:           poxid[`${peripheralUuid}`],
+//     data:             output.hr,
+//     anchorId:         env.anchor,
+//     tags:             'instantaneous'    
+//   };
+//   console.log ('data from ' + poxid[`${peripheralUuid}`] + '. hr: ' + output.hr + ', anchorId: ' + env.anchor);
+//   // sms.send(JSON.stringify(message));      
+//   return vitals.send(JSON.stringify(message));
+// })
 
+// nobleRead for PulseOx
 nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, data]) 
 {
+  // console.log ("Reading data...")
   var buffer = Buffer.from(data);
-  //saveToFile(poxid[`${peripheralUuid}`], buffer.toString('hex'));
-  // poxid[`${peripheralUuid}`] // month day hour
-  var output = readPoxData(buffer);
+//   //saveToFile(poxid[`${peripheralUuid}`], buffer.toString('hex'));
+//   // poxid[`${peripheralUuid}`] // month day hour
+  if (serviceUuid == 'fff0') {
+    var output = readACCPacket(buffer);
+  } else if (serviceUuid === '180d') {
+    var output = readHRPacket(buffer)
+  }
   
   if (output.type == 'data_vitals') 
   {
@@ -572,60 +704,99 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
         tags:           'instantaneous'
       };
       // updatePixel(peripheralUuid, 'green', output.perf); // change green color level based on measurement quality
-      vitals.send(JSON.stringify(message));      
-      return anchorData.send(JSON.stringify(message)); 
+      vitals.send(JSON.stringify(message));  
+      return sms.send(JSON.stringify(message));
+//       return anchorData.send(JSON.stringify(message)); 
     }
   }
 
-  if (output.type == 'data_raw') 
+  if (output.type == 'acc_raw')
   {
-    // console.log('data from ' + poxid[`${peripheralUuid}`] + '. Raw data: ' + output.raw0 + ', ' +
-    //   output.raw1 + ', ' + output.raw2 + ', ' + output.raw3 + ', ' + output.raw4 + ', ' + 
-    //   ', anchorid: ' + env.anchor);      
+    console.log('data from ' + poxid[`${peripheralUuid}`] + '. accX: ' + output.accX + 
+        ', accY: ' + output.accY + ', accZ: ' + output.accZ + ', anchorid: ' + env.anchor);
 
     var message = 
     {
       gattid:         poxid[`${peripheralUuid}`],
-      raw0:           output.raw0,
-      raw1:           output.raw1,
-      raw2:           output.raw2,
-      raw3:           output.raw3,
-      raw4:           output.raw4,
-      anchorId:       env.anchor
+      accX:           output.accX,
+      accY:           output.accY,
+      accZ:           output.accZ,
+      device:         'imu',
+      // time:           output.time,
+      anchorId:       env.anchor,
+      tags:           'instantaneous'
     };
-  
-    //return anchorData.send(JSON.stringify(message));     
+
+    firebase.send(JSON.stringify(message));
+    return vitals.send(JSON.stringify(message));
   }
 
-  if (output.type == 'data_battery') 
+  if (output.type == 'hr_raw')
   {
-  
-    // console.log('data from ' + poxid[`${peripheralUuid}`] + '. battery level: ' + output.battery + '/4 ' + ', anchorid: ' + env.anchor);      
-    
+    console.log ('data from ' + poxid[`${peripheralUuid}`] + '. hr: ' + output.hr + ', anchorId: ' + env.anchor);
+
     var message = 
     {
-      gattid:         poxid[`${peripheralUuid}`],
-      battery:        output.battery,
-      anchorId:       env.anchor
+      gattid:           poxid[`${peripheralUuid}`],
+      data:             output.hr,
+      anchorId:         env.anchor,
+      device:           'hr',
+      tags:             'instantaneous'    
     };
 
-    return battery.send(JSON.stringify(message));   
+    firebase.send(JSON.stringify(message));
+    return vitals.send(JSON.stringify(message));
   }
 
-  if (output.type == 'data_count') 
-  {
+  // if (output.type == 'data_raw') 
+  // {
+  //   console.log('data from ' + poxid[`${peripheralUuid}`] + '. Raw data: ' + output.raw0 + ', ' +
+  //     output.raw1 + ', ' + output.raw2 + ', ' + output.raw3 + ', ' + output.raw4 + ', ' + 
+  //     ', anchorid: ' + env.anchor);      
+
+  //   var message = 
+  //   {
+  //     gattid:         poxid[`${peripheralUuid}`],
+  //     raw0:           output.raw0,
+  //     raw1:           output.raw1,
+  //     raw2:           output.raw2,
+  //     raw3:           output.raw3,
+  //     raw4:           output.raw4,
+  //     anchorId:       env.anchor
+  //   };
   
-    //console.log('data from ' + poxid[`${peripheralUuid}`] + '. Count down: ' + output.cntD + '/30 ' + ', anchorid: ' + env.anchor);      
+//     //return anchorData.send(JSON.stringify(message));     
+//   }
+
+//   if (output.type == 'data_battery') 
+//   {
+  
+//     // console.log('data from ' + poxid[`${peripheralUuid}`] + '. battery level: ' + output.battery + '/4 ' + ', anchorid: ' + env.anchor);      
     
-    var message = 
-    {
-      gattid:         poxid[`${peripheralUuid}`],
-      count_down:     output.cntD,
-      anchorId:       env.anchor
-    };
-    // updatePixel(peripheralUuid, 'green'); // ongoing measurement procedure..
-    //return anchorData.send(JSON.stringify(message));   
-  } 
+//     var message = 
+//     {
+//       gattid:         poxid[`${peripheralUuid}`],
+//       battery:        output.battery,
+//       anchorId:       env.anchor
+//     };
+
+//     return battery.send(JSON.stringify(message));   
+//   }
+
+//   if (output.type == 'data_count') 
+//   {
+  
+//     //console.log('data from ' + poxid[`${peripheralUuid}`] + '. Count down: ' + output.cntD + '/30 ' + ', anchorid: ' + env.anchor);      
+    
+//     var message = 
+//     {
+//       gattid:         poxid[`${peripheralUuid}`],
+//       count_down:     output.cntD,
+//       anchorId:       env.anchor
+//     };
+//     // updatePixel(peripheralUuid, 'green'); // ongoing measurement procedure..
+//     //return anchorData.send(JSON.stringify(message));   
+//   } 
  
   if (output.type == 'data_avg') 
   {
@@ -642,11 +813,12 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
     };
     // updatePixel(peripheralUuid, 'red', 0); // The measurement procedure is finished
     vitals.send(JSON.stringify(message));
-    return finalReading.send(JSON.stringify(message));   
+    return sms.send(JSON.stringify(message));
+//     return finalReading.send(JSON.stringify(message));   
   }
 
 
-  // Result and Average data might come together in one line:
+//   // Result and Average data might come together in one line:
   if (output.type == 'data_result_averag') 
   {
     console.log('data from ' + poxid[`${peripheralUuid}`] + '. Result Message: ' + output.resultCode + ', anchorid: ' + env.anchor);      
@@ -657,8 +829,11 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
       result_code:     output.resultCode,
       anchorId:       env.anchor
     };
+
+    vitals.send(JSON.stringify(message));
     // updatePixel(peripheralUuid, 'red', 0); // The measurement procedure is finished
-    //anchorData.send(JSON.stringify(message));  
+    sms.send(JSON.stringify(message));
+//     //anchorData.send(JSON.stringify(message));  
 
 
     console.log('data from ' + poxid[`${peripheralUuid}`] + '. Final spo2: ' + output.avg_spo2 + 
@@ -672,124 +847,125 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
       anchorId:             env.anchor,
       tags:                 'final'
     };
-    vitals.send(JSON.stringify(message));      
-    return finalReading.send(JSON.stringify(message));   
+    vitals.send(JSON.stringify(message));  
+    return sms.send(JSON.stringify(message));    
+//     return finalReading.send(JSON.stringify(message));   
   }
 
 
 
-  // Multiple data packets:
-  // vitals, raw and count down packets are frequently coming together because
-  // they are sent more often then others. So here i only include their combinations
-  // as pairs. (I ommit battery, since it is not required as others.) ~selman
+//   // Multiple data packets:
+//   // vitals, raw and count down packets are frequently coming together because
+//   // they are sent more often then others. So here i only include their combinations
+//   // as pairs. (I ommit battery, since it is not required as others.) ~selman
 
-  if (output.type == 'data_vitals_raw') 
-  {
-    // console.log('  ## data_vitals_raw ... ');
+//   if (output.type == 'data_vitals_raw') 
+//   {
+//     // console.log('  ## data_vitals_raw ... ');
 
-    // console.log('data from ' + poxid[`${peripheralUuid}`] + '. Raw data: ' + output.raw0 + ', ' +
-    //   output.raw1 + ', ' + output.raw2 + ', ' + output.raw3 + ', ' + output.raw4 + ', ' + 
-    //   ', anchorid: ' + env.anchor);  
+//     // console.log('data from ' + poxid[`${peripheralUuid}`] + '. Raw data: ' + output.raw0 + ', ' +
+//     //   output.raw1 + ', ' + output.raw2 + ', ' + output.raw3 + ', ' + output.raw4 + ', ' + 
+//     //   ', anchorid: ' + env.anchor);  
 
-    var message = 
-    {
-      gattid:         poxid[`${peripheralUuid}`],
-      raw0:           output.raw0,
-      raw1:           output.raw1,
-      raw2:           output.raw2,
-      raw3:           output.raw3,
-      raw4:           output.raw4,
-      anchorId:       env.anchor
-    };
-    //anchorData.send(JSON.stringify(message));  
+//     var message = 
+//     {
+//       gattid:         poxid[`${peripheralUuid}`],
+//       raw0:           output.raw0,
+//       raw1:           output.raw1,
+//       raw2:           output.raw2,
+//       raw3:           output.raw3,
+//       raw4:           output.raw4,
+//       anchorId:       env.anchor
+//     };
+//     //anchorData.send(JSON.stringify(message));  
 
-    if(output.spo2 > 0 && output.pr > 0) 
-    {
-      console.log('data from ' + poxid[`${peripheralUuid}`] + '. spo2: ' + output.spo2 + 
-        ', pr: ' + output.pr + ', perfusion index: ' + output.perf + ', anchorid: ' + env.anchor);      
+//     if(output.spo2 > 0 && output.pr > 0) 
+//     {
+//       console.log('data from ' + poxid[`${peripheralUuid}`] + '. spo2: ' + output.spo2 + 
+//         ', pr: ' + output.pr + ', perfusion index: ' + output.perf + ', anchorid: ' + env.anchor);      
 
-      var message = 
-      {
-        gattid:         poxid[`${peripheralUuid}`],
-        heart_rate:     output.pr,
-        spo2:           output.spo2,
-        perf_indx:      output.perf,
-        anchorId:       env.anchor,
-        tags:           'instantaneous'
-      };
-      // updatePixel(peripheralUuid, 'green', output.perf); // change green color level based on measurement quality
-      vitals.send(JSON.stringify(message));      
-      return anchorData.send(JSON.stringify(message)); 
-    }
-  }
+//       var message = 
+//       {
+//         gattid:         poxid[`${peripheralUuid}`],
+//         heart_rate:     output.pr,
+//         spo2:           output.spo2,
+//         perf_indx:      output.perf,
+//         anchorId:       env.anchor,
+//         tags:           'instantaneous'
+//       };
+//       // updatePixel(peripheralUuid, 'green', output.perf); // change green color level based on measurement quality
+//       vitals.send(JSON.stringify(message));      
+//       return anchorData.send(JSON.stringify(message)); 
+//     }
+//   }
 
-  if (output.type == 'data_vitals_count') 
-  {
-    // console.log('  ## data_vitals_count ... ');
+//   if (output.type == 'data_vitals_count') 
+//   {
+//     // console.log('  ## data_vitals_count ... ');
     
-    //console.log('data from ' + poxid[`${peripheralUuid}`] + '. Count down: ' + output.cntD + '/30 ' + ', anchorid: ' + env.anchor);      
+//     //console.log('data from ' + poxid[`${peripheralUuid}`] + '. Count down: ' + output.cntD + '/30 ' + ', anchorid: ' + env.anchor);      
     
-    var message = 
-    {
-      gattid:         poxid[`${peripheralUuid}`],
-      count_down:     output.cntD,
-      anchorId:       env.anchor
-    };
-    // updatePixel(peripheralUuid, 'green'); // ongoing measurement procedure..
-    //anchorData.send(JSON.stringify(message));  
+//     var message = 
+//     {
+//       gattid:         poxid[`${peripheralUuid}`],
+//       count_down:     output.cntD,
+//       anchorId:       env.anchor
+//     };
+//     // updatePixel(peripheralUuid, 'green'); // ongoing measurement procedure..
+//     //anchorData.send(JSON.stringify(message));  
 
-    if(output.spo2 > 0 && output.pr > 0) 
-    {
-      console.log('data from ' + poxid[`${peripheralUuid}`] + '. spo2: ' + output.spo2 + 
-        ', pr: ' + output.pr + ', perfusion index: ' + output.perf + ', anchorid: ' + env.anchor);      
+//     if(output.spo2 > 0 && output.pr > 0) 
+//     {
+//       console.log('data from ' + poxid[`${peripheralUuid}`] + '. spo2: ' + output.spo2 + 
+//         ', pr: ' + output.pr + ', perfusion index: ' + output.perf + ', anchorid: ' + env.anchor);      
 
-      var message = 
-      {
-        gattid:         poxid[`${peripheralUuid}`],
-        heart_rate:     output.pr,
-        spo2:           output.spo2,
-        perf_indx:      output.perf,
-        anchorId:       env.anchor,
-        tags:           'instantaneous'
-      };
-      // updatePixel(peripheralUuid, 'green', output.perf); // change green color level based on measurement quality
-      vitals.send(JSON.stringify(message));      
-      return anchorData.send(JSON.stringify(message)); 
-    }
-  }
+//       var message = 
+//       {
+//         gattid:         poxid[`${peripheralUuid}`],
+//         heart_rate:     output.pr,
+//         spo2:           output.spo2,
+//         perf_indx:      output.perf,
+//         anchorId:       env.anchor,
+//         tags:           'instantaneous'
+//       };
+//       // updatePixel(peripheralUuid, 'green', output.perf); // change green color level based on measurement quality
+//       vitals.send(JSON.stringify(message));      
+//       return anchorData.send(JSON.stringify(message)); 
+//     }
+//   }
 
-  if (output.type == 'data_raw_count') 
-  {
-    // console.log('  ## data_raw_count ... ');
+//   if (output.type == 'data_raw_count') 
+//   {
+//     // console.log('  ## data_raw_count ... ');
 
-    // console.log('data from ' + poxid[`${peripheralUuid}`] + '. Raw data: ' + output.raw0 + ', ' +
-    //   output.raw1 + ', ' + output.raw2 + ', ' + output.raw3 + ', ' + output.raw4 + ', ' + 
-    //   ', anchorid: ' + env.anchor);  
+//     // console.log('data from ' + poxid[`${peripheralUuid}`] + '. Raw data: ' + output.raw0 + ', ' +
+//     //   output.raw1 + ', ' + output.raw2 + ', ' + output.raw3 + ', ' + output.raw4 + ', ' + 
+//     //   ', anchorid: ' + env.anchor);  
 
-    var message = 
-    {
-      gattid:         poxid[`${peripheralUuid}`],
-      raw0:           output.raw0,
-      raw1:           output.raw1,
-      raw2:           output.raw2,
-      raw3:           output.raw3,
-      raw4:           output.raw4,
-      anchorId:       env.anchor
-    };
-    //anchorData.send(JSON.stringify(message));  
+//     var message = 
+//     {
+//       gattid:         poxid[`${peripheralUuid}`],
+//       raw0:           output.raw0,
+//       raw1:           output.raw1,
+//       raw2:           output.raw2,
+//       raw3:           output.raw3,
+//       raw4:           output.raw4,
+//       anchorId:       env.anchor
+//     };
+//     //anchorData.send(JSON.stringify(message));  
 
 
-    //console.log('data from ' + poxid[`${peripheralUuid}`] + '. Count down: ' + output.cntD + '/30 ' + ', anchorid: ' + env.anchor);      
+//     //console.log('data from ' + poxid[`${peripheralUuid}`] + '. Count down: ' + output.cntD + '/30 ' + ', anchorid: ' + env.anchor);      
     
-    var message = 
-    {
-      gattid:         poxid[`${peripheralUuid}`],
-      count_down:     output.cntD,
-      anchorId:       env.anchor
-    };
-    // updatePixel(peripheralUuid, 'green'); // ongoing measurement procedure..
-    //anchorData.send(JSON.stringify(message));  
-  }
+//     var message = 
+//     {
+//       gattid:         poxid[`${peripheralUuid}`],
+//       count_down:     output.cntD,
+//       anchorId:       env.anchor
+//     };
+//     // updatePixel(peripheralUuid, 'green'); // ongoing measurement procedure..
+//     //anchorData.send(JSON.stringify(message));  
+//   }
 
 
 });
@@ -798,6 +974,7 @@ nobleRead$.subscribe(function([peripheralUuid, serviceUuid, characteristicUuid, 
 
 nobleDisconnect$.subscribe(function(uuid) {  
   clearTimeout(timers[uuid]); // kill delayed connections
+  noble.startScanning([], true);
   // removePixel(uuid);  
   // if(connectedPeripherals().length == 0) { //last disconnect
   //   leds.setup();
@@ -816,6 +993,14 @@ socketConnect$.subscribe(function([fd, ep]) {
 
 socketRetry$.subscribe(function([fd, ep]) {  
   console.log('data socket retrying connection to', ep);
+});
+
+notificationConnect$.subscribe(function([fd,ep]) {
+  console.log('notification server socket connected to', ep);
+});
+
+notificationRetry$.subscribe(function([fd,ep]) {
+  console.log('notification server socket retrying connection to', ep);
 });
 
 scheduleReset$.subscribe(function() {

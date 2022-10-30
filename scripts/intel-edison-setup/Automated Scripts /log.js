@@ -1,4 +1,4 @@
-var Promise, battery, exec, execAsync, hciconfig, ifconfig, iproute, iwconfig, version;
+var Promise, battery, exec, execAsync, hciconfig, ifconfig, iproute, iwconfig, version, host;
 
 Promise = require('bluebird');
 

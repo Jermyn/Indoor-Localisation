@@ -33,10 +33,10 @@ vitals.connect(config.zmqSockets.vitals.pushpull);
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // OBSERVABLES
 /////////////////////////////////////////////////////////////////////////////////////////////// 
-healthyPatient$ = Rx.Observable.timer(5000, 10000)
+// healthyPatient$ = Rx.Observable.timer(5000, 10000)
 // _rawData$ = Rx.Observable.timer(1000, 1000)
 // exitProg$ = Rx.Observable.timer(200000)
-// unhealthyPatient$ = Rx.Observable.timer(60000, 120000)
+unhealthyPatient$ = Rx.Observable.timer(5000, 120000)
 // positionUpdate$ = Rx.Observable.timer(4000,50000)
 // updateSyslog$  = Rx.Observable.timer(1000, 60000);
 // anchorRequest$ = Rx.Observable.timer(2000);
@@ -184,9 +184,39 @@ rawDataSend = function() {
 //   env.anchor = anchor; // anchor mac address  
 // });
 
-healthyPatient$.subscribe(function() {
-	[bpm, spo2] = goodPatientPulse()
-	console.log('data from ' + healthyid + ', bpm: ' + bpm + ', anchorid: ' + anchor);
+// healthyPatient$.subscribe(function() {
+// 	[bpm, spo2] = goodPatientPulse()
+// 	console.log('data from ' + healthyid + ', bpm: ' + bpm + ', anchorid: ' + anchor);
+//     // send data via zmq                
+//     data = {
+//       gattid:         healthyid, //uuid: peripheral.uuid,
+//       // service:        '6e400001b5a3f393e0a9e50e24dcca9e',
+//       // characteristic: '6e400003b5a3f393e0a9e50e24dcca9e',
+//       heart_rate:     bpm, 
+//       spo2:           spO2,
+//       anchorId:       anchor,
+//       type: "VITALS",
+//       tags : "instantaneous"
+//     };
+//     console.log ("Sending..." + ', bpm: ' + bpm + ', spo2: ' + spo2)
+//     // console.log (data)
+//     // console.log (typeof(data), typeof(JSON.stringify(data)))
+//     return vitals.send(JSON.stringify(data))
+//     // return anchorData.send(data);
+// })
+
+unhealthyPatient$.subscribe(function() {
+	if (counter == 1) {
+		[bpm, spO2] = goodPatientPulse()
+	}
+	else if (counter == 2) {
+		[bpm, spO2] = badPatientPulse()
+	}
+	else {
+		[bpm, spO2] = worsePatientPulse()
+		counter = 1
+	}
+	console.log('data from ' + healthyid + '. spO2: ' + spO2 + ', bpm: ' + bpm + ', anchorid: ' + anchor);
     // send data via zmq                
     data = {
       gattid:         healthyid, //uuid: peripheral.uuid,
@@ -198,34 +228,7 @@ healthyPatient$.subscribe(function() {
       type: "VITALS",
       tags : "instantaneous"
     };
-    console.log ("Sending..." + ', bpm: ' + bpm + ', spo2: ' + spo2)
-    // console.log (data)
-    // console.log (typeof(data), typeof(JSON.stringify(data)))
+    // return anchorData.send(JSON.stringify(data));
+    console.log ("Sending..." + ', bpm: ' + bpm + ', spO2: ' + spO2)
     return vitals.send(JSON.stringify(data))
-    // return anchorData.send(data);
 })
-
-// unhealthyPatient$.subscribe(function() {
-// 	if (counter == 1) {
-// 		[bpm, spO2] = goodPatientPulse()
-// 	}
-// 	else if (counter == 2) {
-// 		[bpm, spO2] = badPatientPulse()
-// 	}
-// 	else {
-// 		[bpm, spO2] = worsePatientPulse()
-// 		counter = 1
-// 	}
-// 	console.log('data from ' + poxid + '. spO2: ' + spO2 + ', bpm: ' + bpm + ', anchorid: ' + anchor);
-//     // send data via zmq                
-//     data = {
-//       gattid:         poxid, //uuid: peripheral.uuid,
-//       // service:        '6e400001b5a3f393e0a9e50e24dcca9e',
-//       // characteristic: '6e400003b5a3f393e0a9e50e24dcca9e',
-//       heart_rate:     bpm, 
-//       spo2:           spO2,
-//       anchorId:       anchor
-//     };
-//     // return anchorData.send(JSON.stringify(data));
-//     return console.log ("Sending..." + ', bpm: ' + bpm + ', spO2: ' + spO2)
-// })

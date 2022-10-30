@@ -9,14 +9,15 @@ pp = pprint.PrettyPrinter(indent=2)
 
 # config
 config = None
-with open('../configOLD.json', 'r') as f:
+with open('./aws_config.json', 'r') as f:
   config = json.load(f)
 
 # zmq
 beaconData = zmq.Context().socket(zmq.PULL)
 beaconData.setsockopt(zmq.SNDHWM, 10000)
-beaconData.bind(config['zmqSockets']['rawData']['pushpull'])
+beaconData.bind(config['zmqSockets']['sms']['pushpull'])
 
+#### For testing ####
 # while True:
 #   data = beaconData.recv_json()
 #   print (data)
@@ -24,6 +25,7 @@ beaconData.bind(config['zmqSockets']['rawData']['pushpull'])
 #     print(beaconData.recv_json())
   # if data['receiverId'] == '' and data['transmitterId'] == 'b2':
   #   print (data)
+#####################
 
 # state
 edges = defaultdict(lambda: {})

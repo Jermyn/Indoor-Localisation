@@ -21,8 +21,11 @@
     "finalReading": {
       "pushpull":             "tcp://10.0.12.15:5559"
     },
-    "analysis": {
+     "analysis": {
       "pushpull":             "tcp://10.0.12.15:5560"
+    },
+    "firebase": {
+      "pushpull":             "tcp://10.0.12.15:5561"
     },
     "broker": {
       "xpub":                 "tcp://10.0.12.15:5567",
@@ -42,6 +45,7 @@
     "gattNotification":       "GATT_NOTFICATION",
     "connectGattRequest":     "CONNECT_GATT_REQUEST",
     "positionUpdate":         "POSITION_UPDATE",
-    "gattAddition":           "GATT_ADDITION"
+    "gattAddition":           "GATT_ADDITION",
+    "databaseUpdate":         "DATABASE_UPDATE"
   }
 }
