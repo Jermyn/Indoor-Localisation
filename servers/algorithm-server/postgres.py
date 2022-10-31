@@ -67,9 +67,9 @@ def inputMapData(conn, id, url):
   except psycopg2.DatabaseError as error:
     print (error)
 
-# conn = connectDatabase()
-# fetchMapData(conn, 'actlab')
-# fetchAnchorData(conn, 'rpi10')
+conn = connectDatabase()
+fetchMapData(conn, 'actlab')
+fetchAnchorData(conn, 'rpi10')
 # inputAnchorData()
 # inputMapData(conn, 'simulation_ward', 'http://52.77.184.100:3000/api/Maps/simulation_ward/image')
 # fetchMapData(conn, 'simulation_ward')
