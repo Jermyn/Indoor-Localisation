@@ -21,3 +21,17 @@ Extract scripts are found in `/scripts/extract-data`
 5. analysis-server - Calibration Files
 6. new-web-server - Development website
 7. medicalWebsite - Client website
+
+## Useful Videos for References
+
+### Medical Website
+1. Location Tracking - http://gofile.me/2xtQD/73hNwKNf2
+2. Vitals Monitoring - http://gofile.me/2xtQD/sRjmbqXjo
+3. Contact Tracing - http://gofile.me/2xtQD/1yQCSxGVB
+
+### Experiment
+1. Complete_AH - http://gofile.me/2xtQD/mC44lncxy
+2. MD6 (Reduced Length) - http://gofile.me/2xtQD/cJ3jqBLKL
+
+### Filters
+1. Filter_Explanation - http://gofile.me/2xtQD/gZWMMQMgy
