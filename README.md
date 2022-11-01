@@ -14,6 +14,9 @@ Useful Scripts are found in `/scripts/intel-edison-setup/Automated Scripts`
 
 Extract scripts are found in `/scripts/extract-data`
 
+## Tutorial for Students
+Mini Assignment - http://gofile.me/2xtQD/Q4mDZh5mV
+
 ## Server
 1. api-server - Connector to Postgres RDS
 2. Notification-server
